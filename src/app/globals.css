@@ -1,0 +1,295 @@
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Questrial&display=swap");
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: #000;
+  font-family: "Instrument Serif", Georgia, "Times New Roman", serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.page-shell {
+  min-height: 100vh;
+}
+
+.page-shell {
+  background: #f8f3eb;
+}
+
+.mobile-invitation,
+.desktop-message {
+  min-height: 100vh;
+}
+
+.mobile-invitation {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  width: 100%;
+  background: #000;
+  cursor: pointer;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+.background-video,
+.last-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.last-frame {
+  z-index: 1;
+}
+
+.tap-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 2rem;
+  z-index: 1;
+  margin: 0;
+  color: rgba(0, 0, 0, 0.92);
+  font-size: 0.8rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+}
+
+.desktop-message {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background:
+    radial-gradient(circle at top, rgba(196, 164, 132, 0.28), transparent 40%),
+    #090909;
+}
+
+.desktop-eyebrow {
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+}
+
+.desktop-card {
+  max-width: 32rem;
+  padding: 2.5rem;
+  text-align: center;
+  color: #fff8f2;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+
+.desktop-card h2 {
+  margin: 0;
+  font-size: clamp(2rem, 3vw, 3rem);
+}
+
+.desktop-card p:last-child {
+  margin: 1rem 0 0;
+  line-height: 1.7;
+  color: rgba(255, 248, 242, 0.82);
+}
+
+.invitation-details {
+  min-height: 100vh;
+  background: #f8f3eb;
+}
+
+.details-card {
+  position: relative;
+  width: 100%;
+  min-height: auto;
+  margin: 0 auto;
+  overflow: hidden;
+  color: #ffeec8;
+  background:
+    url("/figma-frame-bg.png") center top / cover no-repeat,
+    #f8f3eb;
+}
+
+.hero-details {
+  min-height: 520px;
+  padding: 4.6rem 1.5rem 3.2rem;
+  text-align: center;
+  background:
+    url("/save-date-bg-transparent.png") center center / calc(100% + 2px) 100%
+      no-repeat,
+    #f8f3eb;
+}
+
+.save-date,
+.hero-details h1,
+.venue-section h2,
+.closing-section p {
+  margin: 0;
+  font-family: "Instrument Serif", Georgia, "Times New Roman", serif;
+  font-weight: 700;
+}
+
+.save-date {
+  font-size: clamp(2.5rem, 12vw, 3.4rem);
+  line-height: 1.08;
+}
+
+.hero-details h1 {
+  margin-top: 1rem;
+  font-size: clamp(4rem, 18vw, 5.6rem);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+
+.intro-copy {
+  width: min(100%, 21rem);
+  margin: 1.4rem auto 0;
+  font-family: "Instrument Serif", Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  line-height: 1.24;
+}
+
+.countdown {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  width: min(100%, 22rem);
+  margin: 1.75rem auto 0;
+}
+
+.countdown div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  border-right: 1px solid rgba(255, 238, 200, 0.75);
+}
+
+.countdown div:last-child {
+  border-right: 0;
+}
+
+.countdown strong {
+  font-family: "Instrument Serif", Georgia, "Times New Roman", serif;
+  font-size: 2.45rem;
+  font-weight: 400;
+  line-height: 0.9;
+}
+
+.countdown span {
+  font-size: 0.8rem;
+  text-transform: lowercase;
+}
+
+.calendar-button {
+  margin-top: 1.35rem;
+  border: 0;
+  border-radius: 999px;
+  background: #ffeec8;
+  color: #111;
+  padding: 0.7rem 1.5rem;
+  font-family: Questrial, Arial, Helvetica, sans-serif;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.venue-section {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 4.25rem 0 4rem;
+  color: #a39a61;
+}
+
+.venue-section h2 {
+  width: 100%;
+  margin: 0;
+  font-size: clamp(3.2rem, 14vw, 4.2rem);
+  line-height: 0.94;
+  text-align: center;
+}
+
+.venue-section span {
+  display: block;
+}
+
+.venue-name {
+  width: 100%;
+  margin: 1.1rem 0 0;
+  color: #6f6a3c;
+  font-family: Questrial, Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.venue-map {
+  width: calc(100% - 3rem);
+  height: 300px;
+  margin: 2rem auto 0;
+  border: 0;
+  border-radius: 1.25rem;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+}
+
+.closing-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0;
+  min-height: 360px;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: url("/closing-section-bg.png") center top / cover no-repeat;
+}
+
+.closing-icon {
+  width: 4.5rem;
+  height: auto;
+  margin-bottom: 1.15rem;
+}
+
+.closing-section p {
+  max-width: 21rem;
+  margin: 0;
+  color: #ffeec8;
+  font-family: "Instrument Serif", Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 9vw, 3rem);
+  font-weight: 700;
+  line-height: 1.02;
+}
+
+@media (min-width: 768px) {
+  .mobile-invitation {
+    display: none;
+  }
+
+  .desktop-message {
+    display: flex;
+  }
+}
