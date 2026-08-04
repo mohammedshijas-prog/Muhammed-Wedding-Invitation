@@ -16,7 +16,7 @@ const SCENES = {
 
 type Scene = keyof typeof SCENES;
 
-const WEDDING_DATE = new Date("2027-03-31T00:00:00+04:00").getTime();
+const WEDDING_DATE = new Date("2026-08-28T00:00:00+04:00").getTime();
 
 function getCountdown() {
   const distance = Math.max(WEDDING_DATE - Date.now(), 0);
@@ -43,10 +43,10 @@ function downloadCalendarInvite() {
     "PRODID:-//Wedding Invitation//EN",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
-    "UID:wedding-31-03-27@wedding-invitation.local",
+    "UID:wedding-28-08-26@wedding-invitation.local",
     "DTSTAMP:20260803T000000Z",
-    "DTSTART;VALUE=DATE:20270331",
-    "DTEND;VALUE=DATE:20270401",
+    "DTSTART;VALUE=DATE:20260828",
+    "DTEND;VALUE=DATE:20260829",
     "SUMMARY:Wedding Reception",
     "LOCATION:The Ritz-Carlton, Amman",
     "DESCRIPTION:We are getting married and would love to share this moment with you.",
@@ -59,7 +59,7 @@ function downloadCalendarInvite() {
   const link = document.createElement("a");
 
   link.href = url;
-  link.download = "wedding-reception-31-03-27.ics";
+  link.download = "wedding-reception-28-08-26.ics";
   document.body.appendChild(link);
   link.click();
   link.remove();
@@ -103,6 +103,25 @@ export default function Home() {
   const [hasStarted, setHasStarted] = useState(false);
   const [scene2Finished, setScene2Finished] = useState(false);
   const [countdown, setCountdown] = useState(getCountdown);
+
+  useEffect(() => {
+    const autoplayIntro = async () => {
+      try {
+        await videoRef.current?.play();
+        setHasStarted(true);
+      } catch {
+        // Keep the first frame visible if a browser blocks autoplay.
+      }
+
+      try {
+        await audioRef.current?.play();
+      } catch {
+        // iOS may require user interaction before audio can start.
+      }
+    };
+
+    void autoplayIntro();
+  }, []);
 
   useEffect(() => {
     sceneRef.current = activeScene;
@@ -156,15 +175,25 @@ export default function Home() {
 
   const startMedia = async () => {
     if (hasStarted) {
+      try {
+        await audioRef.current?.play();
+      } catch {
+        // Audio may remain blocked until a valid user gesture.
+      }
       return;
     }
 
     try {
       await videoRef.current?.play();
-      await audioRef.current?.play();
       setHasStarted(true);
     } catch {
       // Keep the poster frame visible if playback fails for any reason.
+    }
+
+    try {
+      await audioRef.current?.play();
+    } catch {
+      // Audio may remain blocked until a valid user gesture.
     }
   };
 
@@ -188,13 +217,7 @@ export default function Home() {
 
       video.pause();
 
-      if (sceneRef.current === 1) {
-        setScene2Finished(false);
-        shouldPlaySceneRef.current = true;
-        setActiveScene(2);
-      } else {
-        setScene2Finished(true);
-      }
+      setScene2Finished(true);
     }, 1000);
   };
 
@@ -264,6 +287,7 @@ export default function Home() {
           className="background-video"
           src={scene.src}
           poster={scene.poster}
+          autoPlay
           muted
           playsInline
           preload="auto"
@@ -311,7 +335,6 @@ export default function Home() {
           />
         ) : null}
 
-        {!hasStarted ? <p className="tap-hint">Tap to start</p> : null}
       </section>
 
       <section className="desktop-message" aria-label="Desktop notice">
@@ -333,7 +356,7 @@ export default function Home() {
         <div className="details-card">
           <div className="hero-details">
             <p className="save-date">Save The Date</p>
-            <h1>31.03.27</h1>
+            <h1>28.08.26</h1>
             <p className="intro-copy">
               We are getting married and we could not be happier to share this
               moment with you. Here you&apos;ll find the full wedding details:
