@@ -36,20 +36,24 @@ function padTime(value: number) {
   return String(value).padStart(2, "0");
 }
 
+function toArabicDigits(value: number | string) {
+  return String(value).replace(/\d/g, (digit) => "٠١٢٣٤٥٦٧٨٩"[Number(digit)]);
+}
+
 function downloadCalendarInvite() {
   const event = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Wedding Invitation//EN",
+    "PRODID:-//دعوة زفاف//AR",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
     "UID:wedding-28-08-26@wedding-invitation.local",
     "DTSTAMP:20260803T000000Z",
     "DTSTART;VALUE=DATE:20260828",
     "DTEND;VALUE=DATE:20260829",
-    "SUMMARY:Wedding Reception",
-    "LOCATION:The Ritz-Carlton, Amman",
-    "DESCRIPTION:We are getting married and would love to share this moment with you.",
+    "SUMMARY:حفل زفاف محمد وديانا",
+    "LOCATION:ريتز كارلتون، عمّان",
+    "DESCRIPTION:يسعدنا أن تشاركونا فرحتنا في هذا اليوم المميز.",
     "END:VEVENT",
     "END:VCALENDAR",
   ].join("\r\n");
@@ -59,7 +63,7 @@ function downloadCalendarInvite() {
   const link = document.createElement("a");
 
   link.href = url;
-  link.download = "wedding-reception-28-08-26.ics";
+  link.download = "دعوة-زفاف-٢٨-٠٨-٢٠٢٦.ics";
   document.body.appendChild(link);
   link.click();
   link.remove();
@@ -293,6 +297,10 @@ export default function Home() {
           preload="auto"
           controls={false}
           disablePictureInPicture
+          disableRemotePlayback
+          onPlay={() => {
+            setHasStarted(true);
+          }}
           onLoadedMetadata={() => {
             const video = videoRef.current;
 
@@ -317,6 +325,20 @@ export default function Home() {
           onEnded={holdLastFrame}
         />
 
+        {!hasStarted && !scene2Finished ? (
+          <Image
+            className="video-poster-overlay"
+            src="/wedding-poster.jpg"
+            alt=""
+            aria-hidden="true"
+            fill
+            sizes="100vw"
+            priority
+            quality={100}
+            unoptimized
+          />
+        ) : null}
+
         <audio ref={audioRef} preload="auto" loop>
           <source src="/wedding-music.mp3" type="audio/mpeg" />
         </audio>
@@ -339,11 +361,10 @@ export default function Home() {
 
       <section className="desktop-message" aria-label="Desktop notice">
         <div className="desktop-card">
-          <p className="desktop-eyebrow">Mobile Experience Only</p>
-          <h2>Open this invitation on a mobile device.</h2>
+          <p className="desktop-eyebrow">تجربة مخصصة للجوال</p>
+          <h2>افتح الدعوة من جهاز جوال.</h2>
           <p>
-            This wedding invitation is designed as a full-screen vertical video
-            experience.
+            صُممت هذه الدعوة كتجربة عمودية كاملة الشاشة لتناسب الهاتف.
           </p>
         </div>
       </section>
@@ -355,30 +376,29 @@ export default function Home() {
       >
         <div className="details-card">
           <div className="hero-details">
-            <p className="save-date">Save The Date</p>
-            <h1>28.08.26</h1>
+            <p className="save-date">احفظوا التاريخ</p>
+            <h1>{toArabicDigits("28.08.26")}</h1>
             <p className="intro-copy">
-              We are getting married and we could not be happier to share this
-              moment with you. Here you&apos;ll find the full wedding details:
-              the schedule,
+              بكل حب وفرح، يسعدنا أن نشارككم لحظة زفافنا. تجدون هنا تفاصيل
+              الحفل كاملة وجدول المناسبة.
             </p>
 
             <div className="countdown" aria-label="Wedding countdown">
               <div>
-                <strong>{countdown.days}</strong>
-                <span>days</span>
+                <strong>{toArabicDigits(countdown.days)}</strong>
+                <span>يوم</span>
               </div>
               <div>
-                <strong>{padTime(countdown.hours)}</strong>
-                <span>hours</span>
+                <strong>{toArabicDigits(padTime(countdown.hours))}</strong>
+                <span>ساعة</span>
               </div>
               <div>
-                <strong>{padTime(countdown.minutes)}</strong>
-                <span>minutes</span>
+                <strong>{toArabicDigits(padTime(countdown.minutes))}</strong>
+                <span>دقيقة</span>
               </div>
               <div>
-                <strong>{padTime(countdown.seconds)}</strong>
-                <span>seconds</span>
+                <strong>{toArabicDigits(padTime(countdown.seconds))}</strong>
+                <span>ثانية</span>
               </div>
             </div>
 
@@ -387,20 +407,20 @@ export default function Home() {
               type="button"
               onClick={downloadCalendarInvite}
             >
-              Add to Calendar
+              أضف إلى التقويم
             </button>
           </div>
 
           <div className="venue-section">
             <h2>
-              Recaption
-              <span>Venue</span>
+              مكان
+              <span>الحفل</span>
             </h2>
-            <p className="venue-name">Ritz Carlton, Amman</p>
+            <p className="venue-name">ريتز كارلتون، عمّان</p>
             <iframe
               className="venue-map"
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3384.995842272909!2d35.8820578!3d31.9610095!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x151ca051615155a1%3A0x4c2b19aef5c97126!2sThe%20Ritz-Carlton%2C%20Amman!5e0!3m2!1sen!2sae!4v1785765807372!5m2!1sen!2sae"
-              title="The Ritz-Carlton, Amman map"
+              title="خريطة ريتز كارلتون، عمّان"
               allowFullScreen
               loading="lazy"
               referrerPolicy="strict-origin-when-cross-origin"
@@ -417,7 +437,7 @@ export default function Home() {
               aria-hidden="true"
               unoptimized
             />
-            <p>Your presence would be the greatest gift we could receive!</p>
+            <p>حضوركم هو أجمل هدية يمكن أن نتلقاها!</p>
           </div>
         </div>
       </section>

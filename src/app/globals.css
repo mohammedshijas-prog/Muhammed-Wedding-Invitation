@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Questrial&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap");
 
 :root {
   color-scheme: dark;
@@ -13,7 +13,7 @@ body {
   margin: 0;
   min-height: 100%;
   background: #000;
-  font-family: "Instrument Serif", Georgia, "Times New Roman", serif;
+  font-family: Amiri, "Times New Roman", serif;
 }
 
 button,
@@ -34,11 +34,14 @@ select {
 .mobile-invitation,
 .desktop-message {
   min-height: 100vh;
+  min-height: 100svh;
 }
 
 .mobile-invitation {
   position: relative;
   display: block;
+  height: 100vh;
+  height: 100svh;
   overflow: hidden;
   padding: 0;
   border: 0;
@@ -50,13 +53,18 @@ select {
 }
 
 .background-video,
-.last-frame {
+.last-frame,
+.video-poster-overlay {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   pointer-events: none;
+}
+
+.video-poster-overlay {
+  z-index: 1;
 }
 
 .last-frame {
@@ -146,7 +154,7 @@ select {
 .venue-section h2,
 .closing-section p {
   margin: 0;
-  font-family: "Instrument Serif", Georgia, "Times New Roman", serif;
+  font-family: Amiri, "Times New Roman", serif;
   font-weight: 700;
 }
 
@@ -165,9 +173,9 @@ select {
 .intro-copy {
   width: min(100%, 21rem);
   margin: 1.4rem auto 0;
-  font-family: "Instrument Serif", Georgia, "Times New Roman", serif;
-  font-size: 1rem;
-  line-height: 1.24;
+  font-family: Amiri, "Times New Roman", serif;
+  font-size: 1.1rem;
+  line-height: 1.55;
 }
 
 .countdown {
@@ -190,7 +198,7 @@ select {
 }
 
 .countdown strong {
-  font-family: "Instrument Serif", Georgia, "Times New Roman", serif;
+  font-family: Amiri, "Times New Roman", serif;
   font-size: 2.45rem;
   font-weight: 400;
   line-height: 0.9;
@@ -208,9 +216,9 @@ select {
   background: #ffeec8;
   color: #111;
   padding: 0.7rem 1.5rem;
-  font-family: Questrial, Arial, Helvetica, sans-serif;
-  font-size: 0.85rem;
-  text-transform: uppercase;
+  font-family: Amiri, "Times New Roman", serif;
+  font-size: 1rem;
+  font-weight: 700;
 }
 
 .venue-section {
@@ -239,11 +247,10 @@ select {
   width: 100%;
   margin: 1.1rem 0 0;
   color: #6f6a3c;
-  font-family: Questrial, Arial, Helvetica, sans-serif;
-  font-size: 1rem;
+  font-family: Amiri, "Times New Roman", serif;
+  font-size: 1.2rem;
   letter-spacing: 0.12em;
   text-align: center;
-  text-transform: uppercase;
 }
 
 .venue-map {
@@ -278,7 +285,7 @@ select {
   max-width: 21rem;
   margin: 0;
   color: #ffeec8;
-  font-family: "Instrument Serif", Georgia, "Times New Roman", serif;
+  font-family: Amiri, "Times New Roman", serif;
   font-size: clamp(2rem, 9vw, 3rem);
   font-weight: 700;
   line-height: 1.02;
