@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { push, ref, serverTimestamp } from "firebase/database";
+import { database } from "@/lib/firebase";
 
 const SCENES = {
   1: {
@@ -15,6 +17,7 @@ const SCENES = {
 } as const;
 
 type Scene = keyof typeof SCENES;
+type AttendanceStatus = "attending" | "declined";
 
 const WEDDING_DATE = new Date("2026-08-28T00:00:00+04:00").getTime();
 
@@ -107,6 +110,13 @@ export default function Home() {
   const [hasStarted, setHasStarted] = useState(false);
   const [scene2Finished, setScene2Finished] = useState(false);
   const [countdown, setCountdown] = useState(getCountdown);
+  const [isRsvpOpen, setIsRsvpOpen] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [attendance, setAttendance] = useState<AttendanceStatus>("attending");
+  const [guestCount, setGuestCount] = useState(1);
+  const [guestMessage, setGuestMessage] = useState("");
+  const [isSubmittingRsvp, setIsSubmittingRsvp] = useState(false);
+  const [rsvpMessage, setRsvpMessage] = useState("");
 
   useEffect(() => {
     const autoplayIntro = async () => {
@@ -204,6 +214,52 @@ export default function Home() {
   const handleScreenTap = () => {
     if (!hasStarted) {
       void startMedia();
+    }
+  };
+
+  const closeRsvp = () => {
+    if (isSubmittingRsvp) {
+      return;
+    }
+
+    setIsRsvpOpen(false);
+    setRsvpMessage("");
+  };
+
+  const submitRsvp = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!guestName.trim()) {
+      setRsvpMessage("Please enter your name.");
+      return;
+    }
+
+    setIsSubmittingRsvp(true);
+    setRsvpMessage("");
+
+    try {
+      await push(ref(database, "rsvps"), {
+        name: guestName.trim(),
+        attendance,
+        guests: attendance === "attending" ? guestCount : 0,
+        message: guestMessage.trim(),
+        createdAt: serverTimestamp(),
+      });
+
+      setRsvpMessage("Thank you. Your RSVP has been saved.");
+      setGuestName("");
+      setAttendance("attending");
+      setGuestCount(1);
+      setGuestMessage("");
+
+      window.setTimeout(() => {
+        setIsRsvpOpen(false);
+        setRsvpMessage("");
+      }, 1100);
+    } catch {
+      setRsvpMessage("Could not save RSVP. Please try again.");
+    } finally {
+      setIsSubmittingRsvp(false);
     }
   };
 
@@ -409,6 +465,14 @@ export default function Home() {
             >
               أضف إلى التقويم
             </button>
+
+            <button
+              className="rsvp-open-button"
+              type="button"
+              onClick={() => setIsRsvpOpen(true)}
+            >
+              Confirm Attendance
+            </button>
           </div>
 
           <div className="venue-section">
@@ -441,6 +505,104 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {isRsvpOpen ? (
+        <div className="rsvp-overlay" role="dialog" aria-modal="true">
+          <form className="rsvp-modal" onSubmit={submitRsvp}>
+            <button
+              className="rsvp-close"
+              type="button"
+              aria-label="Close RSVP"
+              onClick={closeRsvp}
+            >
+              ×
+            </button>
+
+            <h2>Confirm your attendance</h2>
+            <p className="rsvp-intro">
+              Your presence would be an honor. Please RSVP so we can prepare
+              the warmest welcome for you.
+            </p>
+
+            <label className="rsvp-field">
+              <span>Your name</span>
+              <input
+                value={guestName}
+                onChange={(event) => setGuestName(event.target.value)}
+                placeholder="Enter your name"
+                autoComplete="name"
+              />
+            </label>
+
+            <div className="rsvp-field">
+              <span>Will you attend?</span>
+              <div className="rsvp-options">
+                <button
+                  className={`rsvp-option attend${
+                    attendance === "attending" ? " selected" : ""
+                  }`}
+                  type="button"
+                  onClick={() => setAttendance("attending")}
+                >
+                  <span className="option-icon">✓</span>
+                  <span>I will attend</span>
+                </button>
+
+                <button
+                  className={`rsvp-option decline${
+                    attendance === "declined" ? " selected" : ""
+                  }`}
+                  type="button"
+                  onClick={() => setAttendance("declined")}
+                >
+                  <span className="option-icon">×</span>
+                  <span>Sorry, I can&apos;t make it</span>
+                </button>
+              </div>
+            </div>
+
+            {attendance === "attending" ? (
+              <div className="guest-count-row">
+                <span>Number of guests (including you)</span>
+                <div className="guest-stepper">
+                  <button
+                    type="button"
+                    onClick={() => setGuestCount((count) => Math.max(1, count - 1))}
+                  >
+                    −
+                  </button>
+                  <strong>{guestCount}</strong>
+                  <button
+                    type="button"
+                    onClick={() => setGuestCount((count) => Math.min(10, count + 1))}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            <label className="rsvp-field">
+              <span>Message to the couple</span>
+              <textarea
+                value={guestMessage}
+                onChange={(event) => setGuestMessage(event.target.value)}
+                placeholder="Leave a note (optional)"
+              />
+            </label>
+
+            {rsvpMessage ? <p className="rsvp-status">{rsvpMessage}</p> : null}
+
+            <button
+              className="rsvp-confirm"
+              type="submit"
+              disabled={isSubmittingRsvp || !guestName.trim()}
+            >
+              {isSubmittingRsvp ? "Saving..." : "Confirm"}
+            </button>
+          </form>
+        </div>
+      ) : null}
     </main>
   );
 }
