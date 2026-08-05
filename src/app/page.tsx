@@ -437,19 +437,19 @@ export default function Home() {
             </div>
 
             <button
-              className="calendar-button"
-              type="button"
-              onClick={downloadCalendarInvite}
-            >
-              أضف إلى التقويم
-            </button>
-
-            <button
               className="rsvp-open-button"
               type="button"
               onClick={() => setIsRsvpOpen(true)}
             >
               Confirm Attendance
+            </button>
+
+            <button
+              className="calendar-button"
+              type="button"
+              onClick={downloadCalendarInvite}
+            >
+              أضف إلى التقويم
             </button>
           </div>
 
