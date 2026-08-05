@@ -5,19 +5,97 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { push, ref, serverTimestamp } from "firebase/database";
 import { database } from "@/lib/firebase";
 
-const SCENES = {
-  1: {
-    src: "/wedding-scene-1.mp4",
-    poster: "/wedding-poster.jpg",
-  },
-  2: {
-    src: "/wedding-scene-2.mp4",
-    poster: "/wedding-poster-2.jpg",
-  },
+const VIDEO = {
+  src: "/wedding-scene-1.mp4",
+  poster: "/wedding-poster.jpg",
 } as const;
 
-type Scene = keyof typeof SCENES;
 type AttendanceStatus = "attending" | "declined";
+type Language = "ar" | "en";
+
+const CONTENT = {
+  ar: {
+    direction: "rtl",
+    desktopEyebrow: "تجربة مخصصة للجوال",
+    desktopTitle: "افتح الدعوة من جهاز جوال.",
+    desktopCopy: "صُممت هذه الدعوة كتجربة عمودية كاملة الشاشة لتناسب الهاتف.",
+    chooseLanguage: "اختر اللغة",
+    arabic: "العربية",
+    english: "English",
+    replay: "إعادة التشغيل",
+    saveDate: "احفظوا التاريخ",
+    intro:
+      "بكل حب وفرح، يسعدنا أن نشارككم لحظة زفافنا. تجدون هنا تفاصيل الحفل كاملة وجدول المناسبة.",
+    countdown: {
+      days: "يوم",
+      hours: "ساعة",
+      minutes: "دقيقة",
+      seconds: "ثانية",
+    },
+    rsvpButton: "تأكيد الحضور",
+    calendarButton: "أضف إلى التقويم",
+    venueTitle: "مكان",
+    venueSubtitle: "الحفل",
+    venueName: "ريتز كارلتون، عمّان",
+    closing: "حضوركم هو أجمل هدية يمكن أن نتلقاها!",
+    rsvp: {
+      title: "تأكيد الحضور",
+      close: "إغلاق نموذج تأكيد الحضور",
+      name: "الاسم",
+      namePlaceholder: "اكتب اسمك",
+      attendQuestion: "هل ستحضر؟",
+      attend: "سأحضر",
+      decline: "نعتذر، لن أتمكن من الحضور",
+      guests: "عدد الضيوف (يشملك)",
+      submit: "تأكيد",
+      saving: "جاري الحفظ...",
+      missingName: "يرجى كتابة الاسم.",
+      success: "شكرًا لكم، تم حفظ تأكيد الحضور.",
+      error: "تعذر حفظ الرد. يرجى المحاولة مرة أخرى.",
+    },
+  },
+  en: {
+    direction: "ltr",
+    desktopEyebrow: "Mobile experience",
+    desktopTitle: "Open the invitation on a mobile device.",
+    desktopCopy:
+      "This invitation is designed as a full-screen vertical mobile experience.",
+    chooseLanguage: "Choose language",
+    arabic: "العربية",
+    english: "English",
+    replay: "Play again",
+    saveDate: "Save The Date",
+    intro:
+      "With love and joy, we are honored to share our wedding moment with you. Here you will find the full celebration details.",
+    countdown: {
+      days: "days",
+      hours: "hours",
+      minutes: "minutes",
+      seconds: "seconds",
+    },
+    rsvpButton: "Confirm Attendance",
+    calendarButton: "Add to Calendar",
+    venueTitle: "Venue",
+    venueSubtitle: "Location",
+    venueName: "The Ritz-Carlton, Amman",
+    closing: "Your presence would be the greatest gift we could receive!",
+    rsvp: {
+      title: "Confirm your attendance",
+      close: "Close RSVP form",
+      name: "Your name",
+      namePlaceholder: "Enter your name",
+      attendQuestion: "Will you attend?",
+      attend: "I will attend",
+      decline: "Sorry, I can't make it",
+      guests: "Number of guests (including you)",
+      submit: "Confirm",
+      saving: "Saving...",
+      missingName: "Please enter your name.",
+      success: "Thank you. Your RSVP has been saved.",
+      error: "Could not save RSVP. Please try again.",
+    },
+  },
+} as const;
 
 const WEDDING_DATE = new Date("2026-08-28T00:00:00+04:00").getTime();
 
@@ -73,40 +151,11 @@ function downloadCalendarInvite() {
   URL.revokeObjectURL(url);
 }
 
-function slowScrollTo(element: HTMLElement, duration = 5200) {
-  const start = window.scrollY;
-  const end = element.getBoundingClientRect().top + window.scrollY;
-  const distance = end - start;
-  const startTime = performance.now();
-
-  const easeInOut = (progress: number) =>
-    progress < 0.5
-      ? 4 * progress * progress * progress
-      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-
-  const animate = (currentTime: number) => {
-    const elapsed = currentTime - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-
-    window.scrollTo(0, start + distance * easeInOut(progress));
-
-    if (progress < 1) {
-      window.requestAnimationFrame(animate);
-    }
-  };
-
-  window.requestAnimationFrame(animate);
-}
-
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const detailsRef = useRef<HTMLElement>(null);
-  const touchStartYRef = useRef<number | null>(null);
-  const sceneRef = useRef<Scene>(1);
-  const shouldPlaySceneRef = useRef(false);
-  const rewindToSceneEndRef = useRef(false);
-  const [activeScene, setActiveScene] = useState<Scene>(1);
+  const [language, setLanguage] = useState<Language>("ar");
+  const [hasSelectedLanguage, setHasSelectedLanguage] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [scene2Finished, setScene2Finished] = useState(false);
   const [countdown, setCountdown] = useState(getCountdown);
@@ -114,51 +163,8 @@ export default function Home() {
   const [guestName, setGuestName] = useState("");
   const [attendance, setAttendance] = useState<AttendanceStatus>("attending");
   const [guestCount, setGuestCount] = useState(1);
-  const [guestMessage, setGuestMessage] = useState("");
   const [isSubmittingRsvp, setIsSubmittingRsvp] = useState(false);
   const [rsvpMessage, setRsvpMessage] = useState("");
-
-  useEffect(() => {
-    sceneRef.current = activeScene;
-
-    if (!shouldPlaySceneRef.current) {
-      return;
-    }
-
-    const video = videoRef.current;
-
-    if (!video) {
-      return;
-    }
-
-    shouldPlaySceneRef.current = false;
-    video.currentTime = 0;
-    void video.play();
-  }, [activeScene]);
-
-  useEffect(() => {
-    document.documentElement.style.overflow = scene2Finished ? "" : "hidden";
-    document.body.style.overflow = scene2Finished ? "" : "hidden";
-
-    return () => {
-      document.documentElement.style.overflow = "";
-      document.body.style.overflow = "";
-    };
-  }, [scene2Finished]);
-
-  useEffect(() => {
-    if (!scene2Finished) {
-      return;
-    }
-
-    const scrollTimer = window.setTimeout(() => {
-      if (detailsRef.current) {
-        slowScrollTo(detailsRef.current);
-      }
-    }, 1200);
-
-    return () => window.clearTimeout(scrollTimer);
-  }, [scene2Finished]);
 
   useEffect(() => {
     const countdownTimer = window.setInterval(() => {
@@ -168,8 +174,13 @@ export default function Home() {
     return () => window.clearInterval(countdownTimer);
   }, []);
 
-  const startMedia = async () => {
-    if (hasStarted) {
+  const copy = CONTENT[language];
+  const isArabic = language === "ar";
+  const formatValue = (value: number | string) =>
+    isArabic ? toArabicDigits(value) : String(value);
+
+  const startMedia = async ({ reset = false } = {}) => {
+    if (hasStarted && !reset) {
       try {
         await audioRef.current?.play();
       } catch {
@@ -178,9 +189,13 @@ export default function Home() {
       return;
     }
 
+    setScene2Finished(false);
+
     try {
       if (videoRef.current) {
-        videoRef.current.currentTime = 0;
+        if (reset) {
+          videoRef.current.currentTime = 0;
+        }
       }
 
       await videoRef.current?.play();
@@ -196,6 +211,17 @@ export default function Home() {
     }
   };
 
+  const selectLanguage = (nextLanguage: Language) => {
+    setLanguage(nextLanguage);
+    setHasSelectedLanguage(true);
+    void startMedia({ reset: true });
+  };
+
+  const replayVideo = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    void startMedia({ reset: true });
+  };
+
   const closeRsvp = () => {
     if (isSubmittingRsvp) {
       return;
@@ -209,7 +235,7 @@ export default function Home() {
     event.preventDefault();
 
     if (!guestName.trim()) {
-      setRsvpMessage("يرجى كتابة الاسم.");
+      setRsvpMessage(copy.rsvp.missingName);
       return;
     }
 
@@ -221,102 +247,52 @@ export default function Home() {
         name: guestName.trim(),
         attendance,
         guests: attendance === "attending" ? guestCount : 0,
-        message: guestMessage.trim(),
         createdAt: serverTimestamp(),
       });
 
-      setRsvpMessage("شكرًا لكم، تم حفظ تأكيد الحضور.");
+      setRsvpMessage(copy.rsvp.success);
       setGuestName("");
       setAttendance("attending");
       setGuestCount(1);
-      setGuestMessage("");
 
       window.setTimeout(() => {
         setIsRsvpOpen(false);
         setRsvpMessage("");
       }, 1100);
     } catch {
-      setRsvpMessage("تعذر حفظ الرد. يرجى المحاولة مرة أخرى.");
+      setRsvpMessage(copy.rsvp.error);
     } finally {
       setIsSubmittingRsvp(false);
     }
   };
 
   const holdLastFrame = () => {
-    window.setTimeout(() => {
-      const video = videoRef.current;
-
-      if (!video) {
-        return;
-      }
-
-      if (Number.isFinite(video.duration)) {
-        video.currentTime = Math.max(video.duration - 0.05, 0);
-      }
-
-      video.pause();
-
-      setScene2Finished(true);
-    }, 1000);
-  };
-
-  const scrubVideo = (deltaY: number) => {
     const video = videoRef.current;
 
-    if (!video || !hasStarted || !Number.isFinite(video.duration)) {
+    if (!video) {
       return;
     }
 
-    if (scene2Finished && deltaY < 0) {
-      setScene2Finished(false);
-    }
-
-    const nextTime = Math.min(
-      Math.max(video.currentTime + deltaY * 0.003, 0),
-      video.duration,
-    );
-
-    if (activeScene === 2 && deltaY < 0 && nextTime <= 0.05) {
-      rewindToSceneEndRef.current = true;
-      setActiveScene(1);
-      return;
+    if (Number.isFinite(video.duration)) {
+      video.currentTime = Math.max(video.duration - 0.05, 0);
     }
 
     video.pause();
-    video.currentTime = nextTime;
+
+    setScene2Finished(true);
   };
 
-  const scene = SCENES[activeScene];
-
   return (
-    <main className="page-shell">
+    <main className="page-shell" dir={copy.direction} lang={language}>
       <section
         className="mobile-invitation"
         aria-label="Wedding invitation video"
-        onWheel={(event) => {
-          scrubVideo(event.deltaY);
-        }}
-        onTouchStart={(event) => {
-          touchStartYRef.current = event.touches[0]?.clientY ?? null;
-        }}
-        onTouchMove={(event) => {
-          const currentY = event.touches[0]?.clientY;
-          const previousY = touchStartYRef.current;
-
-          if (currentY == null || previousY == null) {
-            return;
-          }
-
-          scrubVideo(previousY - currentY);
-          touchStartYRef.current = currentY;
-        }}
       >
         <video
-          key={activeScene}
           ref={videoRef}
           className="background-video"
-          src={scene.src}
-          poster={scene.poster}
+          src={VIDEO.src}
+          poster={VIDEO.poster}
           muted
           playsInline
           preload="auto"
@@ -326,31 +302,10 @@ export default function Home() {
           onPlay={() => {
             setHasStarted(true);
           }}
-          onLoadedMetadata={() => {
-            const video = videoRef.current;
-
-            if (
-              !video ||
-              !rewindToSceneEndRef.current ||
-              !Number.isFinite(video.duration)
-            ) {
-              return;
-            }
-
-            rewindToSceneEndRef.current = false;
-            video.currentTime = Math.max(video.duration - 0.05, 0);
-            video.pause();
-          }}
-          onCanPlay={() => {
-            if (shouldPlaySceneRef.current) {
-              shouldPlaySceneRef.current = false;
-              void videoRef.current?.play();
-            }
-          }}
           onEnded={holdLastFrame}
         />
 
-        {!hasStarted && !scene2Finished ? (
+        {!hasSelectedLanguage && !scene2Finished ? (
           <>
             <Image
               className="video-poster-overlay"
@@ -363,13 +318,19 @@ export default function Home() {
               quality={100}
               unoptimized
             />
-            <button
-              className="start-video-button"
-              type="button"
-              onClick={() => void startMedia()}
-            >
-              ابدأ الدعوة
-            </button>
+            <div className="language-overlay">
+              <div className="language-card">
+                <p>{copy.chooseLanguage}</p>
+                <div className="language-actions">
+                  <button type="button" onClick={() => selectLanguage("ar")}>
+                    {copy.arabic}
+                  </button>
+                  <button type="button" onClick={() => selectLanguage("en")}>
+                    {copy.english}
+                  </button>
+                </div>
+              </div>
+            </div>
           </>
         ) : null}
 
@@ -378,61 +339,53 @@ export default function Home() {
         </audio>
 
         {scene2Finished ? (
-          <Image
-            className="last-frame"
-            src="/wedding-last-frame-2.png"
-            alt=""
-            aria-hidden="true"
-            fill
-            sizes="100vw"
-            priority
-            quality={100}
-            unoptimized
-          />
+          <>
+            <button
+              className="replay-video-button"
+              type="button"
+              onClick={replayVideo}
+            >
+              {copy.replay}
+            </button>
+          </>
         ) : null}
 
       </section>
 
       <section className="desktop-message" aria-label="Desktop notice">
         <div className="desktop-card">
-          <p className="desktop-eyebrow">تجربة مخصصة للجوال</p>
-          <h2>افتح الدعوة من جهاز جوال.</h2>
-          <p>
-            صُممت هذه الدعوة كتجربة عمودية كاملة الشاشة لتناسب الهاتف.
-          </p>
+          <p className="desktop-eyebrow">{copy.desktopEyebrow}</p>
+          <h2>{copy.desktopTitle}</h2>
+          <p>{copy.desktopCopy}</p>
         </div>
       </section>
 
       <section
-        ref={detailsRef}
         className="invitation-details"
         aria-label="Wedding invitation details"
       >
         <div className="details-card">
           <div className="hero-details">
-            <p className="save-date">احفظوا التاريخ</p>
-            <h1>{toArabicDigits("28.08.26")}</h1>
-            <p className="intro-copy">
-              بكل حب وفرح، يسعدنا أن نشارككم لحظة زفافنا. تجدون هنا تفاصيل
-              الحفل كاملة وجدول المناسبة.
-            </p>
+            <p className="save-date">{copy.saveDate}</p>
+            <h1>{formatValue("28.08.26")}</h1>
+            <p className="intro-copy">{copy.intro}</p>
 
             <div className="countdown" aria-label="Wedding countdown">
               <div>
-                <strong>{toArabicDigits(countdown.days)}</strong>
-                <span>يوم</span>
+                <strong>{formatValue(countdown.days)}</strong>
+                <span>{copy.countdown.days}</span>
               </div>
               <div>
-                <strong>{toArabicDigits(padTime(countdown.hours))}</strong>
-                <span>ساعة</span>
+                <strong>{formatValue(padTime(countdown.hours))}</strong>
+                <span>{copy.countdown.hours}</span>
               </div>
               <div>
-                <strong>{toArabicDigits(padTime(countdown.minutes))}</strong>
-                <span>دقيقة</span>
+                <strong>{formatValue(padTime(countdown.minutes))}</strong>
+                <span>{copy.countdown.minutes}</span>
               </div>
               <div>
-                <strong>{toArabicDigits(padTime(countdown.seconds))}</strong>
-                <span>ثانية</span>
+                <strong>{formatValue(padTime(countdown.seconds))}</strong>
+                <span>{copy.countdown.seconds}</span>
               </div>
             </div>
 
@@ -441,7 +394,7 @@ export default function Home() {
               type="button"
               onClick={() => setIsRsvpOpen(true)}
             >
-              تأكيد الحضور
+              {copy.rsvpButton}
             </button>
 
             <button
@@ -449,16 +402,16 @@ export default function Home() {
               type="button"
               onClick={downloadCalendarInvite}
             >
-              أضف إلى التقويم
+              {copy.calendarButton}
             </button>
           </div>
 
           <div className="venue-section">
             <h2>
-              مكان
-              <span>الحفل</span>
+              {copy.venueTitle}
+              <span>{copy.venueSubtitle}</span>
             </h2>
-            <p className="venue-name">ريتز كارلتون، عمّان</p>
+            <p className="venue-name">{copy.venueName}</p>
             <iframe
               className="venue-map"
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3384.995842272909!2d35.8820578!3d31.9610095!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x151ca051615155a1%3A0x4c2b19aef5c97126!2sThe%20Ritz-Carlton%2C%20Amman!5e0!3m2!1sen!2sae!4v1785765807372!5m2!1sen!2sae"
@@ -479,7 +432,7 @@ export default function Home() {
               aria-hidden="true"
               unoptimized
             />
-            <p>حضوركم هو أجمل هدية يمكن أن نتلقاها!</p>
+            <p>{copy.closing}</p>
           </div>
         </div>
       </section>
@@ -490,26 +443,26 @@ export default function Home() {
             <button
               className="rsvp-close"
               type="button"
-              aria-label="إغلاق نموذج تأكيد الحضور"
+              aria-label={copy.rsvp.close}
               onClick={closeRsvp}
             >
               ×
             </button>
 
-            <h2>تأكيد الحضور</h2>
+            <h2>{copy.rsvp.title}</h2>
 
             <label className="rsvp-field">
-              <span>الاسم</span>
+              <span>{copy.rsvp.name}</span>
               <input
                 value={guestName}
                 onChange={(event) => setGuestName(event.target.value)}
-                placeholder="اكتب اسمك"
+                placeholder={copy.rsvp.namePlaceholder}
                 autoComplete="name"
               />
             </label>
 
             <div className="rsvp-field">
-              <span>هل ستحضر؟</span>
+              <span>{copy.rsvp.attendQuestion}</span>
               <div className="rsvp-options">
                 <button
                   className={`rsvp-option attend${
@@ -519,7 +472,7 @@ export default function Home() {
                   onClick={() => setAttendance("attending")}
                 >
                   <span className="option-icon">✓</span>
-                  <span>سأحضر</span>
+                  <span>{copy.rsvp.attend}</span>
                 </button>
 
                 <button
@@ -530,14 +483,14 @@ export default function Home() {
                   onClick={() => setAttendance("declined")}
                 >
                   <span className="option-icon">×</span>
-                  <span>نعتذر، لن أتمكن من الحضور</span>
+                  <span>{copy.rsvp.decline}</span>
                 </button>
               </div>
             </div>
 
             {attendance === "attending" ? (
               <div className="guest-count-row">
-                <span>عدد الضيوف (يشملك)</span>
+                <span>{copy.rsvp.guests}</span>
                 <div className="guest-stepper">
                   <button
                     type="button"
@@ -545,7 +498,7 @@ export default function Home() {
                   >
                     −
                   </button>
-                  <strong>{toArabicDigits(guestCount)}</strong>
+                  <strong>{formatValue(guestCount)}</strong>
                   <button
                     type="button"
                     onClick={() => setGuestCount((count) => Math.min(10, count + 1))}
@@ -556,15 +509,6 @@ export default function Home() {
               </div>
             ) : null}
 
-            <label className="rsvp-field">
-              <span>رسالة للعروسين</span>
-              <textarea
-                value={guestMessage}
-                onChange={(event) => setGuestMessage(event.target.value)}
-                placeholder="اكتب رسالة (اختياري)"
-              />
-            </label>
-
             {rsvpMessage ? <p className="rsvp-status">{rsvpMessage}</p> : null}
 
             <button
@@ -572,7 +516,7 @@ export default function Home() {
               type="submit"
               disabled={isSubmittingRsvp}
             >
-              {isSubmittingRsvp ? "جاري الحفظ..." : "تأكيد"}
+              {isSubmittingRsvp ? copy.rsvp.saving : copy.rsvp.submit}
             </button>
           </form>
         </div>
