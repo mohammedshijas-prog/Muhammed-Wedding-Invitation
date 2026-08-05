@@ -119,25 +119,6 @@ export default function Home() {
   const [rsvpMessage, setRsvpMessage] = useState("");
 
   useEffect(() => {
-    const autoplayIntro = async () => {
-      try {
-        await videoRef.current?.play();
-        setHasStarted(true);
-      } catch {
-        // Keep the first frame visible if a browser blocks autoplay.
-      }
-
-      try {
-        await audioRef.current?.play();
-      } catch {
-        // iOS may require user interaction before audio can start.
-      }
-    };
-
-    void autoplayIntro();
-  }, []);
-
-  useEffect(() => {
     sceneRef.current = activeScene;
 
     if (!shouldPlaySceneRef.current) {
@@ -198,6 +179,10 @@ export default function Home() {
     }
 
     try {
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
+      }
+
       await videoRef.current?.play();
       setHasStarted(true);
     } catch {
@@ -208,12 +193,6 @@ export default function Home() {
       await audioRef.current?.play();
     } catch {
       // Audio may remain blocked until a valid user gesture.
-    }
-  };
-
-  const handleScreenTap = () => {
-    if (!hasStarted) {
-      void startMedia();
     }
   };
 
@@ -314,13 +293,6 @@ export default function Home() {
       <section
         className="mobile-invitation"
         aria-label="Wedding invitation video"
-        onClick={handleScreenTap}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            handleScreenTap();
-          }
-        }}
         onWheel={(event) => {
           scrubVideo(event.deltaY);
         }}
@@ -338,8 +310,6 @@ export default function Home() {
           scrubVideo(previousY - currentY);
           touchStartYRef.current = currentY;
         }}
-        role="button"
-        tabIndex={0}
       >
         <video
           key={activeScene}
@@ -347,7 +317,6 @@ export default function Home() {
           className="background-video"
           src={scene.src}
           poster={scene.poster}
-          autoPlay
           muted
           playsInline
           preload="auto"
@@ -382,17 +351,26 @@ export default function Home() {
         />
 
         {!hasStarted && !scene2Finished ? (
-          <Image
-            className="video-poster-overlay"
-            src="/wedding-poster.jpg"
-            alt=""
-            aria-hidden="true"
-            fill
-            sizes="100vw"
-            priority
-            quality={100}
-            unoptimized
-          />
+          <>
+            <Image
+              className="video-poster-overlay"
+              src="/wedding-poster.jpg"
+              alt=""
+              aria-hidden="true"
+              fill
+              sizes="100vw"
+              priority
+              quality={100}
+              unoptimized
+            />
+            <button
+              className="start-video-button"
+              type="button"
+              onClick={() => void startMedia()}
+            >
+              ابدأ الدعوة
+            </button>
+          </>
         ) : null}
 
         <audio ref={audioRef} preload="auto" loop>
@@ -596,7 +574,7 @@ export default function Home() {
             <button
               className="rsvp-confirm"
               type="submit"
-              disabled={isSubmittingRsvp || !guestName.trim()}
+              disabled={isSubmittingRsvp}
             >
               {isSubmittingRsvp ? "Saving..." : "Confirm"}
             </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { onValue, ref } from "firebase/database";
+import { onValue, ref, remove } from "firebase/database";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { database } from "@/lib/firebase";
@@ -35,6 +35,7 @@ export default function AdminPage() {
   const [rsvps, setRsvps] = useState<RsvpRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [deletingId, setDeletingId] = useState("");
 
   useEffect(() => {
     const rsvpsRef = ref(database, "rsvps");
@@ -107,6 +108,25 @@ export default function AdminPage() {
     URL.revokeObjectURL(url);
   };
 
+  const deleteRsvp = async (rsvp: RsvpRecord) => {
+    const shouldDelete = window.confirm(`Delete RSVP for ${rsvp.name}?`);
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    setDeletingId(rsvp.id);
+    setLoadError("");
+
+    try {
+      await remove(ref(database, `rsvps/${rsvp.id}`));
+    } catch {
+      setLoadError("Unable to delete RSVP. Check Firebase Realtime Database rules.");
+    } finally {
+      setDeletingId("");
+    }
+  };
+
   return (
     <main className="admin-shell">
       <section className="admin-hero">
@@ -170,6 +190,7 @@ export default function AdminPage() {
                     <th>Guests</th>
                     <th>Message</th>
                     <th>Submitted</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -186,6 +207,16 @@ export default function AdminPage() {
                       <td>{rsvp.attendance === "attending" ? rsvp.guests : "-"}</td>
                       <td>{rsvp.message || "-"}</td>
                       <td>{formatDate(rsvp.createdAt)}</td>
+                      <td>
+                        <button
+                          className="admin-delete-button"
+                          type="button"
+                          onClick={() => void deleteRsvp(rsvp)}
+                          disabled={deletingId === rsvp.id}
+                        >
+                          {deletingId === rsvp.id ? "Deleting..." : "Delete"}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -213,6 +244,14 @@ export default function AdminPage() {
                   <p>
                     <strong>Submitted:</strong> {formatDate(rsvp.createdAt)}
                   </p>
+                  <button
+                    className="admin-delete-button"
+                    type="button"
+                    onClick={() => void deleteRsvp(rsvp)}
+                    disabled={deletingId === rsvp.id}
+                  >
+                    {deletingId === rsvp.id ? "Deleting..." : "Delete"}
+                  </button>
                 </article>
               ))}
             </div>
