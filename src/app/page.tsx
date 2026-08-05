@@ -5,9 +5,15 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { push, ref, serverTimestamp } from "firebase/database";
 import { database } from "@/lib/firebase";
 
-const VIDEO = {
-  src: "/wedding-scene-1.mp4",
-  poster: "/wedding-poster.jpg",
+const VIDEOS = {
+  ar: {
+    src: "/wedding-scene-1.mp4",
+    poster: "/wedding-poster.jpg",
+  },
+  en: {
+    src: "/wedding-scene-en.mp4",
+    poster: "/wedding-poster-en.jpg",
+  },
 } as const;
 
 type AttendanceStatus = "attending" | "declined";
@@ -179,7 +185,13 @@ export default function Home() {
   const formatValue = (value: number | string) =>
     isArabic ? toArabicDigits(value) : String(value);
 
-  const startMedia = async ({ reset = false } = {}) => {
+  const startMedia = async ({
+    reset = false,
+    videoLanguage = language,
+  }: {
+    reset?: boolean;
+    videoLanguage?: Language;
+  } = {}) => {
     if (hasStarted && !reset) {
       try {
         await audioRef.current?.play();
@@ -192,7 +204,15 @@ export default function Home() {
     setScene2Finished(false);
 
     try {
+      const nextVideo = VIDEOS[videoLanguage];
+
       if (videoRef.current) {
+        if (reset) {
+          videoRef.current.src = nextVideo.src;
+          videoRef.current.poster = nextVideo.poster;
+          videoRef.current.load();
+        }
+
         if (reset) {
           videoRef.current.currentTime = 0;
         }
@@ -214,7 +234,7 @@ export default function Home() {
   const selectLanguage = (nextLanguage: Language) => {
     setLanguage(nextLanguage);
     setHasSelectedLanguage(true);
-    void startMedia({ reset: true });
+    void startMedia({ reset: true, videoLanguage: nextLanguage });
   };
 
   const replayVideo = () => {
@@ -282,6 +302,8 @@ export default function Home() {
     setScene2Finished(true);
   };
 
+  const selectedVideo = VIDEOS[language];
+
   return (
     <main className="page-shell" dir={copy.direction} lang={language}>
       <section
@@ -291,8 +313,8 @@ export default function Home() {
         <video
           ref={videoRef}
           className="background-video"
-          src={VIDEO.src}
-          poster={VIDEO.poster}
+          src={selectedVideo.src}
+          poster={selectedVideo.poster}
           muted
           playsInline
           preload="auto"
@@ -309,7 +331,7 @@ export default function Home() {
           <>
             <Image
               className="video-poster-overlay"
-              src="/wedding-poster.jpg"
+              src={selectedVideo.poster}
               alt=""
               aria-hidden="true"
               fill
@@ -320,7 +342,6 @@ export default function Home() {
             />
             <div className="language-overlay">
               <div className="language-card">
-                <p>{copy.chooseLanguage}</p>
                 <div className="language-actions">
                   <button type="button" onClick={() => selectLanguage("ar")}>
                     {copy.arabic}
