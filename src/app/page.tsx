@@ -160,6 +160,7 @@ function downloadCalendarInvite() {
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const shouldPlaySelectedVideoRef = useRef(false);
   const [language, setLanguage] = useState<Language>("ar");
   const [hasSelectedLanguage, setHasSelectedLanguage] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
@@ -185,13 +186,7 @@ export default function Home() {
   const formatValue = (value: number | string) =>
     isArabic ? toArabicDigits(value) : String(value);
 
-  const startMedia = async ({
-    reset = false,
-    videoLanguage = language,
-  }: {
-    reset?: boolean;
-    videoLanguage?: Language;
-  } = {}) => {
+  const startMedia = async ({ reset = false } = {}) => {
     if (hasStarted && !reset) {
       try {
         await audioRef.current?.play();
@@ -204,19 +199,10 @@ export default function Home() {
     setScene2Finished(false);
 
     try {
-      const nextVideo = VIDEOS[videoLanguage];
       const video = videoRef.current;
 
       if (video && reset) {
-        const nextSource = new URL(nextVideo.src, window.location.origin).href;
-        const sourceChanged = video.currentSrc !== nextSource;
-
-        video.poster = nextVideo.poster;
-
-        if (sourceChanged) {
-          video.src = nextVideo.src;
-          video.load();
-        } else if (Number.isFinite(video.duration)) {
+        if (Number.isFinite(video.duration)) {
           video.currentTime = 0;
         }
       }
@@ -235,9 +221,22 @@ export default function Home() {
   };
 
   const selectLanguage = (nextLanguage: Language) => {
+    shouldPlaySelectedVideoRef.current = true;
     setLanguage(nextLanguage);
     setHasSelectedLanguage(true);
-    void startMedia({ reset: true, videoLanguage: nextLanguage });
+    setHasStarted(false);
+    setScene2Finished(false);
+
+    try {
+      void audioRef.current?.play();
+    } catch {
+      // Audio may remain blocked until a valid user gesture.
+    }
+
+    if (nextLanguage === language) {
+      shouldPlaySelectedVideoRef.current = false;
+      void startMedia({ reset: true });
+    }
   };
 
   const replayVideo = () => {
@@ -314,10 +313,12 @@ export default function Home() {
         aria-label="Wedding invitation video"
       >
         <video
+          key={language}
           ref={videoRef}
           className="background-video"
           src={selectedVideo.src}
           poster={selectedVideo.poster}
+          autoPlay={hasSelectedLanguage}
           muted
           playsInline
           preload="auto"
@@ -326,6 +327,14 @@ export default function Home() {
           disableRemotePlayback
           onPlay={() => {
             setHasStarted(true);
+          }}
+          onCanPlay={() => {
+            if (!shouldPlaySelectedVideoRef.current) {
+              return;
+            }
+
+            shouldPlaySelectedVideoRef.current = false;
+            void startMedia({ reset: true });
           }}
           onEnded={holdLastFrame}
         />
