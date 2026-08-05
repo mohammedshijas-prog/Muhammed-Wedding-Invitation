@@ -209,7 +209,7 @@ export default function Home() {
     event.preventDefault();
 
     if (!guestName.trim()) {
-      setRsvpMessage("Please enter your name.");
+      setRsvpMessage("يرجى كتابة الاسم.");
       return;
     }
 
@@ -225,7 +225,7 @@ export default function Home() {
         createdAt: serverTimestamp(),
       });
 
-      setRsvpMessage("Thank you. Your RSVP has been saved.");
+      setRsvpMessage("شكرًا لكم، تم حفظ تأكيد الحضور.");
       setGuestName("");
       setAttendance("attending");
       setGuestCount(1);
@@ -236,7 +236,7 @@ export default function Home() {
         setRsvpMessage("");
       }, 1100);
     } catch {
-      setRsvpMessage("Could not save RSVP. Please try again.");
+      setRsvpMessage("تعذر حفظ الرد. يرجى المحاولة مرة أخرى.");
     } finally {
       setIsSubmittingRsvp(false);
     }
@@ -441,7 +441,7 @@ export default function Home() {
               type="button"
               onClick={() => setIsRsvpOpen(true)}
             >
-              Confirm Attendance
+              تأكيد الحضور
             </button>
 
             <button
@@ -490,30 +490,26 @@ export default function Home() {
             <button
               className="rsvp-close"
               type="button"
-              aria-label="Close RSVP"
+              aria-label="إغلاق نموذج تأكيد الحضور"
               onClick={closeRsvp}
             >
               ×
             </button>
 
-            <h2>Confirm your attendance</h2>
-            <p className="rsvp-intro">
-              Your presence would be an honor. Please RSVP so we can prepare
-              the warmest welcome for you.
-            </p>
+            <h2>تأكيد الحضور</h2>
 
             <label className="rsvp-field">
-              <span>Your name</span>
+              <span>الاسم</span>
               <input
                 value={guestName}
                 onChange={(event) => setGuestName(event.target.value)}
-                placeholder="Enter your name"
+                placeholder="اكتب اسمك"
                 autoComplete="name"
               />
             </label>
 
             <div className="rsvp-field">
-              <span>Will you attend?</span>
+              <span>هل ستحضر؟</span>
               <div className="rsvp-options">
                 <button
                   className={`rsvp-option attend${
@@ -523,7 +519,7 @@ export default function Home() {
                   onClick={() => setAttendance("attending")}
                 >
                   <span className="option-icon">✓</span>
-                  <span>I will attend</span>
+                  <span>سأحضر</span>
                 </button>
 
                 <button
@@ -534,14 +530,14 @@ export default function Home() {
                   onClick={() => setAttendance("declined")}
                 >
                   <span className="option-icon">×</span>
-                  <span>Sorry, I can&apos;t make it</span>
+                  <span>نعتذر، لن أتمكن من الحضور</span>
                 </button>
               </div>
             </div>
 
             {attendance === "attending" ? (
               <div className="guest-count-row">
-                <span>Number of guests (including you)</span>
+                <span>عدد الضيوف (يشملك)</span>
                 <div className="guest-stepper">
                   <button
                     type="button"
@@ -549,7 +545,7 @@ export default function Home() {
                   >
                     −
                   </button>
-                  <strong>{guestCount}</strong>
+                  <strong>{toArabicDigits(guestCount)}</strong>
                   <button
                     type="button"
                     onClick={() => setGuestCount((count) => Math.min(10, count + 1))}
@@ -561,11 +557,11 @@ export default function Home() {
             ) : null}
 
             <label className="rsvp-field">
-              <span>Message to the couple</span>
+              <span>رسالة للعروسين</span>
               <textarea
                 value={guestMessage}
                 onChange={(event) => setGuestMessage(event.target.value)}
-                placeholder="Leave a note (optional)"
+                placeholder="اكتب رسالة (اختياري)"
               />
             </label>
 
@@ -576,7 +572,7 @@ export default function Home() {
               type="submit"
               disabled={isSubmittingRsvp}
             >
-              {isSubmittingRsvp ? "Saving..." : "Confirm"}
+              {isSubmittingRsvp ? "جاري الحفظ..." : "تأكيد"}
             </button>
           </form>
         </div>
