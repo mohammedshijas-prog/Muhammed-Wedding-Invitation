@@ -205,20 +205,23 @@ export default function Home() {
 
     try {
       const nextVideo = VIDEOS[videoLanguage];
+      const video = videoRef.current;
 
-      if (videoRef.current) {
-        if (reset) {
-          videoRef.current.src = nextVideo.src;
-          videoRef.current.poster = nextVideo.poster;
-          videoRef.current.load();
-        }
+      if (video && reset) {
+        const nextSource = new URL(nextVideo.src, window.location.origin).href;
+        const sourceChanged = video.currentSrc !== nextSource;
 
-        if (reset) {
-          videoRef.current.currentTime = 0;
+        video.poster = nextVideo.poster;
+
+        if (sourceChanged) {
+          video.src = nextVideo.src;
+          video.load();
+        } else if (Number.isFinite(video.duration)) {
+          video.currentTime = 0;
         }
       }
 
-      await videoRef.current?.play();
+      await video?.play();
       setHasStarted(true);
     } catch {
       // Keep the poster frame visible if playback fails for any reason.
