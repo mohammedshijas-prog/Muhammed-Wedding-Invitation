@@ -30,8 +30,9 @@ const CONTENT = {
     english: "English",
     replay: "إعادة التشغيل",
     saveDate: "احفظوا التاريخ",
-    intro:
-      "بكل حب وفرح، يسعدنا أن نشارككم لحظة زفافنا. تجدون هنا تفاصيل الحفل كاملة وجدول المناسبة.",
+    intro: "إلى كل غالٍ ومحب، تكتمل فرحتنا بحضوركم",
+    blessing: "بارك الله لكما وبارك عليكما وجمع بينكما في خير",
+    datePoem: "لحظات الفرح اختارت من العمر موعدًا، ليلة يعلوها الفرح والسرور والرضا",
     countdown: {
       days: "يوم",
       hours: "ساعة",
@@ -40,11 +41,13 @@ const CONTENT = {
     },
     rsvpButton: "تأكيد الحضور",
     calendarButton: "أضف إلى التقويم",
-    venueTitle: "مكان",
-    venueSubtitle: "الحفل",
+    venueTitle: "قاعة الاستقبال",
+    venueSubtitle: "",
     venueName: "فور سيزونز عمّان",
     venueMapTitle: "خريطة فور سيزونز عمّان",
-    closing: "حضوركم هو أجمل هدية يمكن أن نتلقاها!",
+    closingLead: "إلى أعزاء الروح وأحباب القلب",
+    closingSmall: "تشرّف",
+    closingName: "عواطف الجهني",
     rsvp: {
       title: "تأكيد الحضور",
       close: "إغلاق نموذج تأكيد الحضور",
@@ -73,7 +76,10 @@ const CONTENT = {
     replay: "Play again",
     saveDate: "Save The Date",
     intro:
-      "With love and joy, we are honored to share our wedding moment with you. Here you will find the full celebration details.",
+      "To every dear heart, our joy is complete with your presence.",
+    blessing: "May Allah bless you both and gather you in goodness.",
+    datePoem:
+      "A joyful night chosen from a lifetime of memories, filled with love, happiness, and grace.",
     countdown: {
       days: "days",
       hours: "hours",
@@ -82,11 +88,13 @@ const CONTENT = {
     },
     rsvpButton: "Confirm Attendance",
     calendarButton: "Add to Calendar",
-    venueTitle: "Venue",
-    venueSubtitle: "Location",
+    venueTitle: "Reception Venue",
+    venueSubtitle: "",
     venueName: "Four Seasons Hotel Amman",
     venueMapTitle: "Map of Four Seasons Hotel Amman",
-    closing: "Your presence would be the greatest gift we could receive!",
+    closingLead: "To our dearest family and friends",
+    closingSmall: "honored by",
+    closingName: "Awatif Al-Juhani",
     rsvp: {
       title: "Confirm your attendance",
       close: "Close RSVP form",
@@ -381,9 +389,32 @@ export default function Home() {
       >
         <div className="details-card">
           <div className="hero-details">
+            <p className="intro-copy">{copy.intro}</p>
+            {isArabic ? (
+              <Image
+                className="arabic-blessing-image"
+                src="/arabic-blessing-frame.png"
+                alt={copy.blessing}
+                width={1024}
+                height={263}
+                priority
+                unoptimized
+              />
+            ) : (
+              <p className="blessing-copy">{copy.blessing}</p>
+            )}
+            <Image
+              className="save-date-ornament"
+              src="/figma-after-scroll-ornament.png"
+              alt=""
+              width={105}
+              height={64}
+              aria-hidden="true"
+              unoptimized
+            />
             <p className="save-date">{copy.saveDate}</p>
             <h1>{formatValue("28.08.26")}</h1>
-            <p className="intro-copy">{copy.intro}</p>
+            <p className="date-poem">{copy.datePoem}</p>
 
             <div className="countdown" aria-label="Wedding countdown">
               <div>
@@ -424,30 +455,40 @@ export default function Home() {
           <div className="venue-section">
             <h2>
               {copy.venueTitle}
-              <span>{copy.venueSubtitle}</span>
+              {copy.venueSubtitle ? <span>{copy.venueSubtitle}</span> : null}
             </h2>
             <p className="venue-name">{copy.venueName}</p>
-            <iframe
-              className="venue-map"
-              src="https://www.google.com/maps?q=Four%20Seasons%20Hotel%20Amman&output=embed"
-              title={copy.venueMapTitle}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="strict-origin-when-cross-origin"
-            />
+            <a
+              className="venue-map-link"
+              href="https://www.google.com/maps/search/?api=1&query=Four%20Seasons%20Hotel%20Amman"
+              target="_blank"
+              rel="noreferrer"
+              aria-label={copy.venueMapTitle}
+            >
+              <Image
+                className="venue-map-image"
+                src="/figma-after-scroll-map.png"
+                alt={copy.venueMapTitle}
+                fill
+                sizes="270px"
+                unoptimized
+              />
+            </a>
           </div>
 
           <div className="closing-section" aria-label="Closing message">
             <Image
               className="closing-icon"
-              src="/closing-rings.png"
+              src="/figma-after-scroll-rings.png"
               alt=""
-              width={72}
-              height={58}
+              width={45}
+              height={43}
               aria-hidden="true"
               unoptimized
             />
-            <p>{copy.closing}</p>
+            <p className="closing-lead">{copy.closingLead}</p>
+            <span>{copy.closingSmall}</span>
+            <p className="closing-name">{copy.closingName}</p>
           </div>
         </div>
       </section>
