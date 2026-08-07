@@ -42,7 +42,8 @@ const CONTENT = {
     calendarButton: "أضف إلى التقويم",
     venueTitle: "مكان",
     venueSubtitle: "الحفل",
-    venueName: "ريتز كارلتون، عمّان",
+    venueName: "فور سيزونز عمّان",
+    venueMapTitle: "خريطة فور سيزونز عمّان",
     closing: "حضوركم هو أجمل هدية يمكن أن نتلقاها!",
     rsvp: {
       title: "تأكيد الحضور",
@@ -83,7 +84,8 @@ const CONTENT = {
     calendarButton: "Add to Calendar",
     venueTitle: "Venue",
     venueSubtitle: "Location",
-    venueName: "The Ritz-Carlton, Amman",
+    venueName: "Four Seasons Hotel Amman",
+    venueMapTitle: "Map of Four Seasons Hotel Amman",
     closing: "Your presence would be the greatest gift we could receive!",
     rsvp: {
       title: "Confirm your attendance",
@@ -139,7 +141,7 @@ function downloadCalendarInvite() {
     "DTSTART;VALUE=DATE:20260828",
     "DTEND;VALUE=DATE:20260829",
     "SUMMARY:حفل زفاف محمد وديانا",
-    "LOCATION:ريتز كارلتون، عمّان",
+    "LOCATION:Four Seasons Hotel Amman",
     "DESCRIPTION:يسعدنا أن تشاركونا فرحتنا في هذا اليوم المميز.",
     "END:VEVENT",
     "END:VCALENDAR",
@@ -162,7 +164,7 @@ export default function Home() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const shouldPlaySelectedVideoRef = useRef(false);
   const [language, setLanguage] = useState<Language>("ar");
-  const [hasSelectedLanguage, setHasSelectedLanguage] = useState(false);
+  const [hasSelectedLanguage, setHasSelectedLanguage] = useState(true);
   const [hasStarted, setHasStarted] = useState(false);
   const [scene2Finished, setScene2Finished] = useState(false);
   const [countdown, setCountdown] = useState(getCountdown);
@@ -339,33 +341,13 @@ export default function Home() {
           onEnded={holdLastFrame}
         />
 
-        {!hasSelectedLanguage && !scene2Finished ? (
-          <>
-            <Image
-              className="video-poster-overlay"
-              src={selectedVideo.poster}
-              alt=""
-              aria-hidden="true"
-              fill
-              sizes="100vw"
-              priority
-              quality={100}
-              unoptimized
-            />
-            <div className="language-overlay">
-              <div className="language-card">
-                <div className="language-actions">
-                  <button type="button" onClick={() => selectLanguage("ar")}>
-                    {copy.arabic}
-                  </button>
-                  <button type="button" onClick={() => selectLanguage("en")}>
-                    {copy.english}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </>
-        ) : null}
+        <button
+          className="language-toggle-button"
+          type="button"
+          onClick={() => selectLanguage(isArabic ? "en" : "ar")}
+        >
+          {isArabic ? copy.english : copy.arabic}
+        </button>
 
         <audio ref={audioRef} preload="auto" loop>
           <source src="/wedding-music.mp3" type="audio/mpeg" />
@@ -447,8 +429,8 @@ export default function Home() {
             <p className="venue-name">{copy.venueName}</p>
             <iframe
               className="venue-map"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3384.995842272909!2d35.8820578!3d31.9610095!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x151ca051615155a1%3A0x4c2b19aef5c97126!2sThe%20Ritz-Carlton%2C%20Amman!5e0!3m2!1sen!2sae!4v1785765807372!5m2!1sen!2sae"
-              title="خريطة ريتز كارلتون، عمّان"
+              src="https://www.google.com/maps?q=Four%20Seasons%20Hotel%20Amman&output=embed"
+              title={copy.venueMapTitle}
               allowFullScreen
               loading="lazy"
               referrerPolicy="strict-origin-when-cross-origin"
