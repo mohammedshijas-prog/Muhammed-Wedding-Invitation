@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { push, ref, serverTimestamp } from "firebase/database";
 import { database } from "@/lib/firebase";
 
@@ -195,14 +195,41 @@ export default function Home() {
   const isArabic = language === "ar";
   const formatValue = (value: number | string) =>
     isArabic ? toArabicDigits(value) : String(value);
+  const playAudio = useCallback(() => {
+    const playPromise = audioRef.current?.play();
+
+    if (playPromise) {
+      void playPromise.catch(() => undefined);
+    }
+  }, []);
+
+  useEffect(() => {
+    const resumeAudio = () => playAudio();
+    const resumeWhenVisible = () => {
+      if (!document.hidden) {
+        playAudio();
+      }
+    };
+
+    playAudio();
+    window.addEventListener("pointerdown", resumeAudio, { once: true });
+    window.addEventListener("touchstart", resumeAudio, { once: true });
+    window.addEventListener("keydown", resumeAudio, { once: true });
+    window.addEventListener("scroll", resumeAudio, { once: true });
+    document.addEventListener("visibilitychange", resumeWhenVisible);
+
+    return () => {
+      window.removeEventListener("pointerdown", resumeAudio);
+      window.removeEventListener("touchstart", resumeAudio);
+      window.removeEventListener("keydown", resumeAudio);
+      window.removeEventListener("scroll", resumeAudio);
+      document.removeEventListener("visibilitychange", resumeWhenVisible);
+    };
+  }, [playAudio]);
 
   const startMedia = async ({ reset = false } = {}) => {
     if (hasStarted && !reset) {
-      try {
-        await audioRef.current?.play();
-      } catch {
-        // Audio may remain blocked until a valid user gesture.
-      }
+      playAudio();
       return;
     }
 
@@ -223,11 +250,7 @@ export default function Home() {
       // Keep the poster frame visible if playback fails for any reason.
     }
 
-    try {
-      await audioRef.current?.play();
-    } catch {
-      // Audio may remain blocked until a valid user gesture.
-    }
+    playAudio();
   };
 
   const selectLanguage = (nextLanguage: Language) => {
@@ -237,11 +260,7 @@ export default function Home() {
     setHasStarted(false);
     setScene2Finished(false);
 
-    try {
-      void audioRef.current?.play();
-    } catch {
-      // Audio may remain blocked until a valid user gesture.
-    }
+    playAudio();
 
     if (nextLanguage === language) {
       shouldPlaySelectedVideoRef.current = false;
@@ -328,7 +347,7 @@ export default function Home() {
           className="background-video"
           src={selectedVideo.src}
           poster={selectedVideo.poster}
-          autoPlay={hasSelectedLanguage}
+          autoPlay
           muted
           playsInline
           preload="auto"
@@ -337,7 +356,9 @@ export default function Home() {
           disableRemotePlayback
           onPlay={() => {
             setHasStarted(true);
+            playAudio();
           }}
+          onLoadedMetadata={() => void startMedia()}
           onCanPlay={() => {
             if (!shouldPlaySelectedVideoRef.current) {
               return;
@@ -357,7 +378,7 @@ export default function Home() {
           {isArabic ? copy.english : copy.arabic}
         </button>
 
-        <audio ref={audioRef} preload="auto" loop>
+        <audio ref={audioRef} preload="auto" autoPlay loop>
           <source src="/wedding-music.mp3" type="audio/mpeg" />
         </audio>
 
