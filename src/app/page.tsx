@@ -113,7 +113,7 @@ const CONTENT = {
   },
 } as const;
 
-const WEDDING_DATE = new Date("2026-08-28T00:00:00+04:00").getTime();
+const WEDDING_DATE = new Date("2026-08-27T00:00:00+04:00").getTime();
 
 function getCountdown() {
   const distance = Math.max(WEDDING_DATE - Date.now(), 0);
@@ -144,10 +144,10 @@ function downloadCalendarInvite() {
     "PRODID:-//دعوة زفاف//AR",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
-    "UID:wedding-28-08-26@wedding-invitation.local",
+    "UID:wedding-27-08-26@wedding-invitation.local",
     "DTSTAMP:20260803T000000Z",
-    "DTSTART;VALUE=DATE:20260828",
-    "DTEND;VALUE=DATE:20260829",
+    "DTSTART;VALUE=DATE:20260827",
+    "DTEND;VALUE=DATE:20260828",
     "SUMMARY:حفل زفاف محمد وديانا",
     "LOCATION:Four Seasons Hotel Amman",
     "DESCRIPTION:يسعدنا أن تشاركونا فرحتنا في هذا اليوم المميز.",
@@ -160,7 +160,7 @@ function downloadCalendarInvite() {
   const link = document.createElement("a");
 
   link.href = url;
-  link.download = "دعوة-زفاف-٢٨-٠٨-٢٠٢٦.ics";
+  link.download = "دعوة-زفاف-٢٧-٠٨-٢٠٢٦.ics";
   document.body.appendChild(link);
   link.click();
   link.remove();
@@ -505,7 +505,7 @@ export default function Home() {
         <div className="details-card">
           <div className="hero-details">
             <p className="save-date">{copy.saveDate}</p>
-            <h1>{formatValue("28.08.26")}</h1>
+            <h1>{formatValue("27.08.26")}</h1>
 
             <div className="countdown" aria-label="Wedding countdown">
               <div>
