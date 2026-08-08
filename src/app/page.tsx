@@ -196,27 +196,43 @@ export default function Home() {
   const isArabic = language === "ar";
   const formatValue = (value: number | string) =>
     isArabic ? toArabicDigits(value) : String(value);
-  const playAudio = useCallback(async () => {
+  // Unmuted playback needs a user gesture on mobile. Falling back to silent
+  // playback keeps the track decoded and running, so unmuting on the first
+  // gesture is instant instead of waiting on a fresh play() request.
+  const playAudio = useCallback(async ({ unmute = false } = {}) => {
     const audio = audioRef.current;
 
-    if (!audio) {
+    if (!audio || audioRequestRef.current) {
       return false;
     }
 
-    if (!audio.paused) {
+    if (!audio.muted && !audio.paused) {
       return true;
-    }
-
-    if (audioRequestRef.current) {
-      return false;
     }
 
     audioRequestRef.current = true;
 
     try {
+      if (unmute) {
+        audio.muted = false;
+        audio.volume = 1;
+      }
+
       await audio.play();
-      return true;
+
+      return !audio.muted;
     } catch {
+      if (!unmute) {
+        return false;
+      }
+
+      try {
+        audio.muted = true;
+        await audio.play();
+      } catch {
+        // Nothing else to try until the next gesture.
+      }
+
       return false;
     } finally {
       audioRequestRef.current = false;
@@ -224,8 +240,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Mobile browsers only allow unmuted audio from a real user gesture, so the
-    // listeners stay attached until a play attempt actually succeeds.
     const gestures = ["pointerdown", "touchend", "click", "keydown"] as const;
     let isActive = true;
 
@@ -234,27 +248,35 @@ export default function Home() {
     };
 
     function unlock() {
-      void playAudio().then((isPlaying) => {
-        if (isPlaying && isActive) {
+      void playAudio({ unmute: true }).then((isAudible) => {
+        if (isAudible && isActive) {
           detach();
         }
       });
     }
 
-    const resumeWhenVisible = () => {
+    // Resumes without touching the muted state, so a browser that pauses on
+    // unmute cannot bounce between pausing and unmuting.
+    const resume = () => {
       if (!document.hidden) {
-        unlock();
+        void playAudio();
       }
     };
 
+    const audio = audioRef.current;
+
     unlock();
     gestures.forEach((gesture) => window.addEventListener(gesture, unlock));
-    document.addEventListener("visibilitychange", resumeWhenVisible);
+    document.addEventListener("visibilitychange", resume);
+    audio?.addEventListener("pause", resume);
+    audio?.addEventListener("stalled", resume);
 
     return () => {
       isActive = false;
       detach();
-      document.removeEventListener("visibilitychange", resumeWhenVisible);
+      document.removeEventListener("visibilitychange", resume);
+      audio?.removeEventListener("pause", resume);
+      audio?.removeEventListener("stalled", resume);
     };
   }, [playAudio]);
 

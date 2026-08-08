@@ -13,6 +13,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl">
+      <head>
+        <link rel="preload" as="image" href="/wedding-poster.jpg" />
+      </head>
       <body>{children}</body>
     </html>
   );
