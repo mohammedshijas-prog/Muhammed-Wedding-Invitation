@@ -172,8 +172,8 @@ export default function Home() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const shouldPlaySelectedVideoRef = useRef(false);
   const audioRequestRef = useRef(false);
+  const hasStartedRef = useRef(false);
   const [language, setLanguage] = useState<Language>("ar");
-  const [hasStarted, setHasStarted] = useState(false);
   const [showPosterCover, setShowPosterCover] = useState(true);
   const [scene2Finished, setScene2Finished] = useState(false);
   const [countdown, setCountdown] = useState(getCountdown);
@@ -239,8 +239,30 @@ export default function Home() {
     }
   }, []);
 
+  // Autoplay can still be refused (iOS Low Power Mode blocks even muted video),
+  // so the opening clip is retried until it is actually rolling.
+  const playVideo = useCallback(() => {
+    const video = videoRef.current;
+
+    if (!video || hasStartedRef.current || !video.paused) {
+      return;
+    }
+
+    video.muted = true;
+
+    void Promise.resolve(video.play()).catch(() => undefined);
+  }, []);
+
   useEffect(() => {
-    const gestures = ["pointerdown", "touchend", "click", "keydown"] as const;
+    // touchstart fires the moment a finger lands, while touchend waits for it
+    // to lift, which during a scroll is far too late to start the music.
+    const gestures = [
+      "touchstart",
+      "pointerdown",
+      "touchend",
+      "click",
+      "keydown",
+    ] as const;
     let isActive = true;
 
     const detach = () => {
@@ -248,6 +270,8 @@ export default function Home() {
     };
 
     function unlock() {
+      playVideo();
+
       void playAudio({ unmute: true }).then((isAudible) => {
         if (isAudible && isActive) {
           detach();
@@ -259,6 +283,7 @@ export default function Home() {
     // unmute cannot bounce between pausing and unmuting.
     const resume = () => {
       if (!document.hidden) {
+        playVideo();
         void playAudio();
       }
     };
@@ -266,7 +291,9 @@ export default function Home() {
     const audio = audioRef.current;
 
     unlock();
-    gestures.forEach((gesture) => window.addEventListener(gesture, unlock));
+    gestures.forEach((gesture) =>
+      window.addEventListener(gesture, unlock, { passive: true }),
+    );
     document.addEventListener("visibilitychange", resume);
     audio?.addEventListener("pause", resume);
     audio?.addEventListener("stalled", resume);
@@ -278,7 +305,7 @@ export default function Home() {
       audio?.removeEventListener("pause", resume);
       audio?.removeEventListener("stalled", resume);
     };
-  }, [playAudio]);
+  }, [playAudio, playVideo]);
 
   const startMedia = ({ reset = false } = {}) => {
     const video = videoRef.current;
@@ -294,7 +321,9 @@ export default function Home() {
       }
 
       void Promise.resolve(video.play())
-        .then(() => setHasStarted(true))
+        .then(() => {
+          hasStartedRef.current = true;
+        })
         .catch(() => undefined);
     }
 
@@ -303,8 +332,8 @@ export default function Home() {
 
   const selectLanguage = (nextLanguage: Language) => {
     shouldPlaySelectedVideoRef.current = true;
+    hasStartedRef.current = false;
     setLanguage(nextLanguage);
-    setHasStarted(false);
     setShowPosterCover(true);
     setScene2Finished(false);
 
@@ -403,7 +432,7 @@ export default function Home() {
           disablePictureInPicture
           disableRemotePlayback
           onPlay={() => {
-            setHasStarted(true);
+            hasStartedRef.current = true;
           }}
           onPlaying={() => {
             setShowPosterCover(false);
@@ -413,18 +442,15 @@ export default function Home() {
               setShowPosterCover(false);
             }
           }}
-          onCanPlay={(event) => {
+          onLoadedData={playVideo}
+          onCanPlay={() => {
             if (shouldPlaySelectedVideoRef.current) {
               shouldPlaySelectedVideoRef.current = false;
               startMedia({ reset: true });
               return;
             }
 
-            if (event.currentTarget.paused) {
-              void Promise.resolve(event.currentTarget.play()).catch(
-                () => undefined,
-              );
-            }
+            playVideo();
           }}
           onEnded={holdLastFrame}
         />
