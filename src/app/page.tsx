@@ -171,9 +171,10 @@ export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const shouldPlaySelectedVideoRef = useRef(false);
+  const audioRequestRef = useRef(false);
   const [language, setLanguage] = useState<Language>("ar");
-  const [hasSelectedLanguage, setHasSelectedLanguage] = useState(true);
   const [hasStarted, setHasStarted] = useState(false);
+  const [showPosterCover, setShowPosterCover] = useState(true);
   const [scene2Finished, setScene2Finished] = useState(false);
   const [countdown, setCountdown] = useState(getCountdown);
   const [isRsvpOpen, setIsRsvpOpen] = useState(false);
@@ -195,82 +196,107 @@ export default function Home() {
   const isArabic = language === "ar";
   const formatValue = (value: number | string) =>
     isArabic ? toArabicDigits(value) : String(value);
-  const playAudio = useCallback(() => {
-    const playPromise = audioRef.current?.play();
+  const playAudio = useCallback(async () => {
+    const audio = audioRef.current;
 
-    if (playPromise) {
-      void playPromise.catch(() => undefined);
+    if (!audio) {
+      return false;
+    }
+
+    if (!audio.paused) {
+      return true;
+    }
+
+    if (audioRequestRef.current) {
+      return false;
+    }
+
+    audioRequestRef.current = true;
+
+    try {
+      await audio.play();
+      return true;
+    } catch {
+      return false;
+    } finally {
+      audioRequestRef.current = false;
     }
   }, []);
 
   useEffect(() => {
-    const resumeAudio = () => playAudio();
+    // Mobile browsers only allow unmuted audio from a real user gesture, so the
+    // listeners stay attached until a play attempt actually succeeds.
+    const gestures = ["pointerdown", "touchend", "click", "keydown"] as const;
+    let isActive = true;
+
+    const detach = () => {
+      gestures.forEach((gesture) => window.removeEventListener(gesture, unlock));
+    };
+
+    function unlock() {
+      void playAudio().then((isPlaying) => {
+        if (isPlaying && isActive) {
+          detach();
+        }
+      });
+    }
+
     const resumeWhenVisible = () => {
       if (!document.hidden) {
-        playAudio();
+        unlock();
       }
     };
 
-    playAudio();
-    window.addEventListener("pointerdown", resumeAudio, { once: true });
-    window.addEventListener("touchstart", resumeAudio, { once: true });
-    window.addEventListener("keydown", resumeAudio, { once: true });
-    window.addEventListener("scroll", resumeAudio, { once: true });
+    unlock();
+    gestures.forEach((gesture) => window.addEventListener(gesture, unlock));
     document.addEventListener("visibilitychange", resumeWhenVisible);
 
     return () => {
-      window.removeEventListener("pointerdown", resumeAudio);
-      window.removeEventListener("touchstart", resumeAudio);
-      window.removeEventListener("keydown", resumeAudio);
-      window.removeEventListener("scroll", resumeAudio);
+      isActive = false;
+      detach();
       document.removeEventListener("visibilitychange", resumeWhenVisible);
     };
   }, [playAudio]);
 
-  const startMedia = async ({ reset = false } = {}) => {
-    if (hasStarted && !reset) {
-      playAudio();
-      return;
+  const startMedia = ({ reset = false } = {}) => {
+    const video = videoRef.current;
+
+    if (reset) {
+      setScene2Finished(false);
+      setShowPosterCover(true);
     }
 
-    setScene2Finished(false);
-
-    try {
-      const video = videoRef.current;
-
-      if (video && reset) {
-        if (Number.isFinite(video.duration)) {
-          video.currentTime = 0;
-        }
+    if (video) {
+      if (reset && Number.isFinite(video.duration)) {
+        video.currentTime = 0;
       }
 
-      await video?.play();
-      setHasStarted(true);
-    } catch {
-      // Keep the poster frame visible if playback fails for any reason.
+      void Promise.resolve(video.play())
+        .then(() => setHasStarted(true))
+        .catch(() => undefined);
     }
 
-    playAudio();
+    void playAudio();
   };
 
   const selectLanguage = (nextLanguage: Language) => {
     shouldPlaySelectedVideoRef.current = true;
     setLanguage(nextLanguage);
-    setHasSelectedLanguage(true);
     setHasStarted(false);
+    setShowPosterCover(true);
     setScene2Finished(false);
 
-    playAudio();
+    void playAudio();
 
     if (nextLanguage === language) {
       shouldPlaySelectedVideoRef.current = false;
-      void startMedia({ reset: true });
+      startMedia({ reset: true });
     }
   };
 
   const replayVideo = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-    void startMedia({ reset: true });
+    startMedia({ reset: true });
   };
 
   const closeRsvp = () => {
@@ -356,18 +382,40 @@ export default function Home() {
           disableRemotePlayback
           onPlay={() => {
             setHasStarted(true);
-            playAudio();
           }}
-          onLoadedMetadata={() => void startMedia()}
-          onCanPlay={() => {
-            if (!shouldPlaySelectedVideoRef.current) {
+          onPlaying={() => {
+            setShowPosterCover(false);
+          }}
+          onTimeUpdate={(event) => {
+            if (showPosterCover && event.currentTarget.currentTime > 0.05) {
+              setShowPosterCover(false);
+            }
+          }}
+          onCanPlay={(event) => {
+            if (shouldPlaySelectedVideoRef.current) {
+              shouldPlaySelectedVideoRef.current = false;
+              startMedia({ reset: true });
               return;
             }
 
-            shouldPlaySelectedVideoRef.current = false;
-            void startMedia({ reset: true });
+            if (event.currentTarget.paused) {
+              void Promise.resolve(event.currentTarget.play()).catch(
+                () => undefined,
+              );
+            }
           }}
           onEnded={holdLastFrame}
+        />
+
+        <Image
+          className={`video-poster-cover${showPosterCover ? "" : " hidden"}`}
+          src={selectedVideo.poster}
+          alt=""
+          fill
+          sizes="100vw"
+          priority
+          aria-hidden="true"
+          unoptimized
         />
 
         <button
@@ -378,9 +426,7 @@ export default function Home() {
           {isArabic ? copy.english : copy.arabic}
         </button>
 
-        <audio ref={audioRef} preload="auto" autoPlay loop>
-          <source src="/wedding-music.mp3" type="audio/mpeg" />
-        </audio>
+        <audio ref={audioRef} src="/wedding-music.mp3" preload="auto" loop />
 
         {scene2Finished ? (
           <>
