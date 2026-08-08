@@ -389,32 +389,8 @@ export default function Home() {
       >
         <div className="details-card">
           <div className="hero-details">
-            <p className="intro-copy">{copy.intro}</p>
-            {isArabic ? (
-              <Image
-                className="arabic-blessing-image"
-                src="/arabic-blessing-frame.png"
-                alt={copy.blessing}
-                width={1024}
-                height={263}
-                priority
-                unoptimized
-              />
-            ) : (
-              <p className="blessing-copy">{copy.blessing}</p>
-            )}
-            <Image
-              className="save-date-ornament"
-              src="/figma-after-scroll-ornament.png"
-              alt=""
-              width={105}
-              height={64}
-              aria-hidden="true"
-              unoptimized
-            />
             <p className="save-date">{copy.saveDate}</p>
             <h1>{formatValue("28.08.26")}</h1>
-            <p className="date-poem">{copy.datePoem}</p>
 
             <div className="countdown" aria-label="Wedding countdown">
               <div>
@@ -481,14 +457,37 @@ export default function Home() {
               className="closing-icon"
               src="/figma-after-scroll-rings.png"
               alt=""
-              width={45}
-              height={43}
+              width={53}
+              height={42}
               aria-hidden="true"
               unoptimized
             />
+            <p className="intro-copy closing-intro">{copy.intro}</p>
+            {isArabic ? (
+              <Image
+                className="closing-blessing-image"
+                src="/closing-blessing-custom.png"
+                alt={copy.blessing}
+                width={1024}
+                height={241}
+                unoptimized
+              />
+            ) : (
+              <>
+                <p className="blessing-copy">{copy.blessing}</p>
+                <Image
+                  className="closing-ornament"
+                  src="/figma-after-scroll-ornament.png"
+                  alt=""
+                  width={105}
+                  height={19}
+                  aria-hidden="true"
+                  unoptimized
+                />
+              </>
+            )}
+            <p className="date-poem closing-poem">{copy.datePoem}</p>
             <p className="closing-lead">{copy.closingLead}</p>
-            <span>{copy.closingSmall}</span>
-            <p className="closing-name">{copy.closingName}</p>
           </div>
         </div>
       </section>
