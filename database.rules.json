@@ -1,0 +1,30 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "rsvps": {
+      "$rsvpId": {
+        ".write": "!data.exists() || newData.exists()",
+
+        ".validate": "newData.hasChildren(['name', 'attendance', 'guests', 'createdAt'])",
+
+        "name": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120"
+        },
+        "attendance": {
+          ".validate": "newData.val() === 'attending' || newData.val() === 'declined'"
+        },
+        "guests": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    }
+  }
+}

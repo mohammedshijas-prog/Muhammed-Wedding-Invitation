@@ -653,6 +653,20 @@ select {
   opacity: 0.75;
 }
 
+.rsvp-whatsapp {
+  display: block;
+  width: 100%;
+  margin-top: 0.9rem;
+  border: 1px solid rgba(231, 196, 119, 0.55);
+  border-radius: 0.85rem;
+  padding: 0.85rem;
+  color: #e7c477;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
+
 .admin-shell {
   min-height: 100vh;
   padding: 1rem;

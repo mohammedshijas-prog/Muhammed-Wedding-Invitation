@@ -2,8 +2,12 @@
 
 import Image from "next/image";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { push, ref, serverTimestamp } from "firebase/database";
-import { database } from "@/lib/firebase";
+import {
+  createRsvpId,
+  flushRsvpQueue,
+  hasPendingRsvps,
+  sendRsvp,
+} from "@/lib/rsvpQueue";
 
 const VIDEOS = {
   ar: {
@@ -61,6 +65,8 @@ const CONTENT = {
       saving: "جاري الحفظ...",
       missingName: "يرجى كتابة الاسم.",
       success: "شكرًا لكم، تم حفظ تأكيد الحضور.",
+      pending: "تم استلام ردكم، وسيتم حفظه فور عودة الاتصال.",
+      whatsapp: "إرسال عبر واتساب",
       error: "تعذر حفظ الرد. يرجى المحاولة مرة أخرى.",
     },
   },
@@ -108,12 +114,17 @@ const CONTENT = {
       saving: "Saving...",
       missingName: "Please enter your name.",
       success: "Thank you. Your RSVP has been saved.",
+      pending: "Thank you. Your RSVP will be sent once you are back online.",
+      whatsapp: "Send via WhatsApp",
       error: "Could not save RSVP. Please try again.",
     },
   },
 } as const;
 
 const WEDDING_DATE = new Date("2026-08-27T00:00:00+04:00").getTime();
+
+// Country code and number, digits only. Leave empty to hide the fallback.
+const FALLBACK_WHATSAPP_NUMBER = "";
 
 function getCountdown() {
   const distance = Math.max(WEDDING_DATE - Date.now(), 0);
@@ -182,6 +193,7 @@ export default function Home() {
   const [attendance, setAttendance] = useState<AttendanceStatus>("attending");
   const [guestCount, setGuestCount] = useState(1);
   const [isSubmittingRsvp, setIsSubmittingRsvp] = useState(false);
+  const [undeliveredRsvp, setUndeliveredRsvp] = useState("");
   const [rsvpMessage, setRsvpMessage] = useState("");
 
   useEffect(() => {
@@ -190,6 +202,36 @@ export default function Home() {
     }, 1000);
 
     return () => window.clearInterval(countdownTimer);
+  }, []);
+
+  // Delivers any RSVP that was taken while the guest had no usable connection.
+  useEffect(() => {
+    const retry = () => {
+      if (hasPendingRsvps()) {
+        void flushRsvpQueue();
+      }
+    };
+
+    const retryWhenVisible = () => {
+      if (document.visibilityState === "visible") {
+        retry();
+      }
+    };
+
+    retry();
+
+    // navigator.onLine only reports whether an interface exists, so a timer
+    // covers connections that are technically up but were failing earlier.
+    const retryTimer = window.setInterval(retry, 30000);
+
+    window.addEventListener("online", retry);
+    document.addEventListener("visibilitychange", retryWhenVisible);
+
+    return () => {
+      window.clearInterval(retryTimer);
+      window.removeEventListener("online", retry);
+      document.removeEventListener("visibilitychange", retryWhenVisible);
+    };
   }, []);
 
   const copy = CONTENT[language];
@@ -369,24 +411,39 @@ export default function Home() {
 
     setIsSubmittingRsvp(true);
     setRsvpMessage("");
+    setUndeliveredRsvp("");
+
+    const name = guestName.trim();
+    const guests = attendance === "attending" ? guestCount : 0;
 
     try {
-      await push(ref(database, "rsvps"), {
-        name: guestName.trim(),
+      const isConfirmed = await sendRsvp({
+        id: createRsvpId(),
+        name,
         attendance,
-        guests: attendance === "attending" ? guestCount : 0,
-        createdAt: serverTimestamp(),
+        guests,
+        createdAt: Date.now(),
       });
 
-      setRsvpMessage(copy.rsvp.success);
+      setRsvpMessage(isConfirmed ? copy.rsvp.success : copy.rsvp.pending);
       setGuestName("");
       setAttendance("attending");
       setGuestCount(1);
 
-      window.setTimeout(() => {
-        setIsRsvpOpen(false);
-        setRsvpMessage("");
-      }, 1100);
+      if (isConfirmed) {
+        window.setTimeout(() => {
+          setIsRsvpOpen(false);
+          setRsvpMessage("");
+        }, 1100);
+      } else {
+        // Kept on screen so a guest whose connection never recovers still has
+        // a way to reach the couple directly.
+        setUndeliveredRsvp(
+          `${copy.rsvp.title}\n${name}\n${
+            attendance === "attending" ? copy.rsvp.attend : copy.rsvp.decline
+          }${attendance === "attending" ? `\n${copy.rsvp.guests}: ${guests}` : ""}`,
+        );
+      }
     } catch {
       setRsvpMessage(copy.rsvp.error);
     } finally {
@@ -680,6 +737,19 @@ export default function Home() {
             ) : null}
 
             {rsvpMessage ? <p className="rsvp-status">{rsvpMessage}</p> : null}
+
+            {undeliveredRsvp && FALLBACK_WHATSAPP_NUMBER ? (
+              <a
+                className="rsvp-whatsapp"
+                href={`https://wa.me/${FALLBACK_WHATSAPP_NUMBER}?text=${encodeURIComponent(
+                  undeliveredRsvp,
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {copy.rsvp.whatsapp}
+              </a>
+            ) : null}
 
             <button
               className="rsvp-confirm"
