@@ -512,8 +512,7 @@ select {
   margin-top: 1.15rem;
 }
 
-.rsvp-field > span,
-.guest-count-row > span {
+.rsvp-field > span {
   color: #374151;
   font-size: 0.95rem;
   font-weight: 700;
@@ -595,36 +594,34 @@ select {
   color: #fff;
 }
 
-.guest-count-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 1.25rem;
-}
-
-.guest-stepper {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-}
-
-.guest-stepper button {
+.guest-options {
   display: grid;
-  place-items: center;
-  width: 2.35rem;
-  height: 2.35rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 999px;
-  background: #fff;
-  color: #6b7280;
-  font-size: 1.25rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.7rem;
 }
 
-.guest-stepper strong {
-  min-width: 1.5rem;
-  color: #111827;
-  font-size: 1.3rem;
+.guest-option {
+  border: 2px solid #f0f1f4;
+  border-radius: 0.85rem;
+  background: #fff;
+  color: #374151;
+  padding: 0.85rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.guest-option.selected {
+  border-color: #10b981;
+  background: #f0fdf9;
+  color: #047857;
+}
+
+.rsvp-note {
+  margin: 1.15rem 0 0;
+  color: #6b7280;
+  font-size: 0.85rem;
+  line-height: 1.35;
   text-align: center;
 }
 

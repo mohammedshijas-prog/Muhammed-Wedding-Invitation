@@ -61,6 +61,8 @@ const CONTENT = {
       attend: "سأحضر",
       decline: "نعتذر، لن أتمكن من الحضور",
       guests: "عدد الضيوف (يشملك)",
+      noKids:
+        "يرجى العلم بأنه لا يُسمح بدخول الأطفال، وذلك بحسب تعليمات إدارة القاعة. شاكرين لكم حسن تفهمكم.",
       submit: "تأكيد",
       saving: "جاري الحفظ...",
       missingName: "يرجى كتابة الاسم.",
@@ -110,6 +112,8 @@ const CONTENT = {
       attend: "I will attend",
       decline: "Sorry, I can't make it",
       guests: "Number of guests (including you)",
+      noKids:
+        "Please note that children are not permitted, as per the venue management's policy. Thank you for your understanding.",
       submit: "Confirm",
       saving: "Saving...",
       missingName: "Please enter your name.",
@@ -125,6 +129,8 @@ const WEDDING_DATE = new Date("2026-08-27T00:00:00+04:00").getTime();
 
 // Country code and number, digits only. Leave empty to hide the fallback.
 const FALLBACK_WHATSAPP_NUMBER = "";
+
+const GUEST_OPTIONS = [2, 3, 4];
 
 function getCountdown() {
   const distance = Math.max(WEDDING_DATE - Date.now(), 0);
@@ -191,7 +197,7 @@ export default function Home() {
   const [isRsvpOpen, setIsRsvpOpen] = useState(false);
   const [guestName, setGuestName] = useState("");
   const [attendance, setAttendance] = useState<AttendanceStatus>("attending");
-  const [guestCount, setGuestCount] = useState(1);
+  const [guestCount, setGuestCount] = useState(GUEST_OPTIONS[0]);
   const [isSubmittingRsvp, setIsSubmittingRsvp] = useState(false);
   const [undeliveredRsvp, setUndeliveredRsvp] = useState("");
   const [rsvpMessage, setRsvpMessage] = useState("");
@@ -428,7 +434,7 @@ export default function Home() {
       setRsvpMessage(isConfirmed ? copy.rsvp.success : copy.rsvp.pending);
       setGuestName("");
       setAttendance("attending");
-      setGuestCount(1);
+      setGuestCount(GUEST_OPTIONS[0]);
 
       if (isConfirmed) {
         window.setTimeout(() => {
@@ -716,25 +722,26 @@ export default function Home() {
             </div>
 
             {attendance === "attending" ? (
-              <div className="guest-count-row">
+              <div className="rsvp-field">
                 <span>{copy.rsvp.guests}</span>
-                <div className="guest-stepper">
-                  <button
-                    type="button"
-                    onClick={() => setGuestCount((count) => Math.max(1, count - 1))}
-                  >
-                    −
-                  </button>
-                  <strong>{formatValue(guestCount)}</strong>
-                  <button
-                    type="button"
-                    onClick={() => setGuestCount((count) => Math.min(10, count + 1))}
-                  >
-                    +
-                  </button>
+                <div className="guest-options">
+                  {GUEST_OPTIONS.map((option) => (
+                    <button
+                      key={option}
+                      className={`guest-option${
+                        guestCount === option ? " selected" : ""
+                      }`}
+                      type="button"
+                      onClick={() => setGuestCount(option)}
+                    >
+                      {formatValue(option)}
+                    </button>
+                  ))}
                 </div>
               </div>
             ) : null}
+
+            <p className="rsvp-note">{copy.rsvp.noKids}</p>
 
             {rsvpMessage ? <p className="rsvp-status">{rsvpMessage}</p> : null}
 
