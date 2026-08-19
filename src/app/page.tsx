@@ -130,7 +130,7 @@ const WEDDING_DATE = new Date("2026-08-27T00:00:00+04:00").getTime();
 // Country code and number, digits only. Leave empty to hide the fallback.
 const FALLBACK_WHATSAPP_NUMBER = "";
 
-const GUEST_OPTIONS = [2, 3, 4];
+const GUEST_OPTIONS = [1, 2, 3, 4, 5];
 
 function getCountdown() {
   const distance = Math.max(WEDDING_DATE - Date.now(), 0);

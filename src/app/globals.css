@@ -596,24 +596,23 @@ select {
 
 .guest-options {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.7rem;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.35rem;
 }
 
 .guest-option {
-  border: 2px solid #f0f1f4;
-  border-radius: 0.85rem;
-  background: #fff;
-  color: #374151;
-  padding: 0.85rem;
-  font-size: 1.1rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #9ca3af;
+  padding: 0.5rem 0.25rem;
+  font-size: 1.15rem;
   font-weight: 700;
   text-align: center;
 }
 
 .guest-option.selected {
-  border-color: #10b981;
-  background: #f0fdf9;
+  border-bottom-color: #10b981;
   color: #047857;
 }
 
