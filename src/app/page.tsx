@@ -34,6 +34,7 @@ const CONTENT = {
     english: "English",
     replay: "إعادة التشغيل",
     saveDate: "احفظوا التاريخ",
+    weddingTime: "الساعة 7:30 مساءً",
     intro: "إلى كل غالٍ ومحب، تكتمل فرحتنا بحضوركم",
     blessing: "بارك الله لكما وبارك عليكما وجمع بينكما في خير",
     datePoem: "لحظات الفرح اختارت من العمر موعدًا، ليلة يعلوها الفرح والسرور والرضا",
@@ -83,6 +84,7 @@ const CONTENT = {
     english: "English",
     replay: "Play again",
     saveDate: "Save The Date",
+    weddingTime: "7:30 PM",
     intro:
       "To every dear heart, our joy is complete with your presence.",
     blessing: "May Allah bless you both and gather you in goodness.",
@@ -163,8 +165,9 @@ function downloadCalendarInvite() {
     "BEGIN:VEVENT",
     "UID:wedding-27-08-26@wedding-invitation.local",
     "DTSTAMP:20260803T000000Z",
-    "DTSTART;VALUE=DATE:20260827",
-    "DTEND;VALUE=DATE:20260828",
+    // 19:30 in Amman, which sits at UTC+3 all year.
+    "DTSTART:20260827T163000Z",
+    "DTEND:20260827T203000Z",
     "SUMMARY:حفل زفاف محمد وديانا",
     "LOCATION:Four Seasons Hotel Amman",
     "DESCRIPTION:يسعدنا أن تشاركونا فرحتنا في هذا اليوم المميز.",
@@ -569,6 +572,7 @@ export default function Home() {
           <div className="hero-details">
             <p className="save-date">{copy.saveDate}</p>
             <h1>{formatValue("27.08.26")}</h1>
+            <p className="wedding-time">{formatValue(copy.weddingTime)}</p>
 
             <div className="countdown" aria-label="Wedding countdown">
               <div>
